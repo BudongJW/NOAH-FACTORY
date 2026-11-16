@@ -27,6 +27,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--init", choices=("random", "current"), default="current",
                    help="start from random positions or refine the current placement")
     r.add_argument("--no-place", action="store_true", help="keep the input placement (route and check only)")
+    r.add_argument("--congestion", type=float, default=None,
+                   help="weight of the routing-congestion term in the placement cost (0 = off)")
     r.add_argument("--no-route", action="store_true")
     r.add_argument("--route-passes", type=int, default=30)
     r.add_argument("--route-timeout", type=int, default=300)
@@ -39,7 +41,8 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         run(RunConfig(input=a.board.resolve(), out=a.out.resolve(), lock=_refs(a.lock), edge=_refs(a.edge),
                       seeds=a.seeds, candidates=a.candidates, place_time_s=a.place_time, init=a.init,
-                      place=not a.no_place, route=not a.no_route, route_passes=a.route_passes, route_timeout_s=a.route_timeout,
+                      place=not a.no_place, route=not a.no_route,
+                      **({"w_congestion": a.congestion} if a.congestion is not None else {}), route_passes=a.route_passes, route_timeout_s=a.route_timeout,
                       export=not a.no_export))
     return 0
 

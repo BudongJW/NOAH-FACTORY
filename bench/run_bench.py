@@ -82,6 +82,9 @@ def main() -> int:
     ap.add_argument("--summary-only", action="store_true", help="rewrite summary.md from results.json")
     ap.add_argument("--replace-from", type=Path, help="with --summary-only: take matching boards from DIR")
     ap.add_argument("--replace-note", default="", help="note shown for replaced rows")
+    ap.add_argument("--congestion", type=float, default=0.0, help="placement congestion weight")
+    ap.add_argument("--seed-offset", type=int, default=0, help="use seeds offset+1..offset+N")
+    ap.add_argument("--work", type=Path, default=None, help="work directory (default runs/bench)")
     ap.add_argument("--control", action="store_true",
                     help="also route the original placement with the same pipeline (control arm)")
     a = ap.parse_args()
@@ -99,7 +102,7 @@ def main() -> int:
         write_summary(rows, a.out / "summary.md")
         print(f"wrote {a.out / 'summary.md'}")
         return 0
-    work_root = ROOT / "runs" / "bench"
+    work_root = a.work or ROOT / "runs" / "bench"
     rows = []
     for name in [b.strip() for b in a.boards.split(",") if b.strip()]:
         path = DEMOS / BOARDS[name]
@@ -113,7 +116,8 @@ def main() -> int:
         try:
             summary = run(RunConfig(input=path, out=work_root / name / "noah", lock=set(base["lock"]),
                                     seeds=a.seeds, candidates=3, place_time_s=place_time, init="random",
-                                    route_passes=40, route_timeout_s=a.route_timeout))
+                                    route_passes=40, route_timeout_s=a.route_timeout,
+                                    w_congestion=a.congestion, seed_offset=a.seed_offset))
             error = None
         except Exception as exc:  # keep benchmarking the other boards
             summary, error = None, f"{type(exc).__name__}: {exc}"

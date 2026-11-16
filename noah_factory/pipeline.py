@@ -46,6 +46,8 @@ class RunConfig:
     place_time_s: float = 30.0
     init: str = "random"
     place: bool = True
+    w_congestion: float = 0.0
+    seed_offset: int = 0  # seeds are seed_offset+1 .. seed_offset+seeds (for repeated runs)
     route: bool = True
     route_passes: int = 30
     route_timeout_s: int = 300
@@ -133,9 +135,10 @@ def run(cfg: RunConfig, log=print) -> dict:
 
     # 2. Placement ----------------------------------------------------------
     t = time.monotonic()
-    pcfg = PlacementConfig(time_limit_s=cfg.place_time_s, init=cfg.init, edge_refs=tuple(cfg.edge))
+    pcfg = PlacementConfig(time_limit_s=cfg.place_time_s, init=cfg.init, edge_refs=tuple(cfg.edge),
+                           w_congestion=cfg.w_congestion)
     if cfg.place:
-        seeds = list(range(1, max(cfg.seeds, cfg.candidates) + 1))
+        seeds = list(range(cfg.seed_offset + 1, cfg.seed_offset + max(cfg.seeds, cfg.candidates) + 1))
         problem, results = place_candidates(ir, pcfg, seeds, workers=cfg.workers)
     else:
         # Keep the input placement (control runs: same router and checks on the original layout).
@@ -173,7 +176,10 @@ def run(cfg: RunConfig, log=print) -> dict:
     best = results[0]
     after = best.breakdown
     log(f"[placement] {len(seeds)} seeds, best HPWL {after['hpwl_mm']} mm (input {before['hpwl_mm']} mm), "
-        f"overlaps {len(after['overlaps'])}, outside {len(after['outside'])} ({timings['placement_s']}s)")
+        f"overlaps {len(after['overlaps'])}, outside {len(after['outside'])}, "
+        f"congestion ACE5 {after['congestion']['ace5']} hot {after['congestion']['hot_bins_pct']}% "
+        f"(input {before['congestion']['ace5']} / {before['congestion']['hot_bins_pct']}%) "
+        f"({timings['placement_s']}s)")
 
     # 3. Routing ------------------------------------------------------------
     final_dir = out / "final"
@@ -228,7 +234,8 @@ def run(cfg: RunConfig, log=print) -> dict:
     ids = build_evidence(store, before=before, after=after, locked=locked, locked_moved=locked_moved,
                          legal_failures=best.legalization_failures, drc=drc, routing=routing,
                          route_stats=rstats, tools=tools, density=density, density_limit=DENSITY_LIMIT_PCT,
-                         zones_removed=zones_removed)
+                         zones_removed=zones_removed,
+                         congestion={"before": before["congestion"], "after": after["congestion"]})
     claims = build_claims(store, ids, before=before, after=after, locked=locked, drc=drc, route_stats=rstats)
     store.dump(out / "evidence.json")
     (out / "claims.json").write_text(json.dumps([asdict(c) for c in claims], ensure_ascii=False, indent=2))
@@ -255,13 +262,15 @@ def run(cfg: RunConfig, log=print) -> dict:
     summary = {
         "input": str(cfg.input), "parts": len(ir.components), "nets": len(ir.nets),
         "layers": ir.board.copper_layers, "locked": locked, "timings": timings, "density_pct": density,
-        "placement": {"input": {k: before[k] for k in ("hpwl_mm",)} | {
+        "placement": {"input": {k: before[k] for k in ("hpwl_mm", "congestion")} | {
             "decap_pass": sum(d["pass"] for d in before["decaps"]), "decap_total": len(before["decaps"])},
             "best": {"hpwl_mm": after["hpwl_mm"], "overlaps": len(after["overlaps"]),
                      "outside": len(after["outside"]),
                      "decap_pass": sum(d["pass"] for d in after["decaps"]),
                      "decap_total": len(after["decaps"]),
+                     "congestion": after["congestion"],
                      "legalization_failures": best.legalization_failures},
+            "w_congestion": cfg.w_congestion, "zones_removed": zones_removed,
             "candidates": candidates},
         "routing": routing, "route_stats": rstats, "drc": {k: v for k, v in drc.items() if k != "examples"},
         "claims": {"verified": sum(c.status == "verified" for c in claims),

@@ -44,6 +44,7 @@ class PlacementConfig:
     edge_refs: tuple[str, ...] = ()
     # Routing congestion (RUDY) term; 0 disables it in the cost (metrics are still reported).
     w_congestion: float = 0.0
+    congestion_start: float = 0.4  # share of the annealing schedule before the term switches on
     congestion: CongestionConfig = field(default_factory=CongestionConfig)
 
 
@@ -531,12 +532,15 @@ def anneal(p: PlacementProblem, seed: int) -> PlacementResult:
         idx = np.array([s[0] for s in saved])
         AB[idx] = p.abs_bb(X, Y, K, idx)
 
-    use_cong = cfg.w_congestion > 0
-    cong = p.build_congestion(X, Y, K) if use_cong else None
+    # The congestion term costs about as much per move as everything else, so it is switched on
+    # only once parts have roughly settled (cfg.congestion_start of the schedule). Before that the
+    # placement is still being spread out at high temperature and congestion carries little signal.
+    use_cong = False
+    cong_enabled = cfg.w_congestion > 0
+    cong = None
 
     def cong_weight(progress):
-        # congestion matters most once parts have settled near their nets
-        return cfg.w_congestion * (0.2 + 0.8 * progress)
+        return cfg.w_congestion * (0.3 + 0.7 * progress)
 
     # Estimate the starting temperature from random uphill moves.
     ups = []
@@ -567,6 +571,9 @@ def anneal(p: PlacementProblem, seed: int) -> PlacementResult:
             progress = max(moves / total_moves, elapsed / cfg.time_limit_s)
             if progress >= 1.0:
                 break
+            if cong_enabled and not use_cong and progress >= cfg.congestion_start:
+                cong = p.build_congestion(X, Y, K)
+                use_cong = True
         T = T0 * (T_end / T0) ** progress
         w_ov = cfg.w_overlap * (1.0 + 30.0 * progress)
         kind, S, arg = propose(progress)
