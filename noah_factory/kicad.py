@@ -269,6 +269,12 @@ def prepare_for_router(board, clearance_mm: float = 0.3, drop_pours: bool = Fals
     return {"pours_removed": len(pours), "copper_graphics_keepouts": keepouts, "netclasses_clamped": clamped}
 
 
+def min_track_width_um(board) -> int:
+    """Board minimum track width in whole micrometres, rounded up (0 if unset)."""
+    nm = int(board.GetDesignSettings().m_TrackMinWidth)
+    return -(-nm // 1000)
+
+
 def clamp_netclasses_to_board_minimums(board) -> list[str]:
     """Raise net-class track width, clearance and via size to the board's minimum constraints.
 

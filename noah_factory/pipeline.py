@@ -17,7 +17,8 @@ from . import __version__
 from .evidence import EvidenceStore
 from .export import export_fabrication
 from .kicad import (apply_placement, board_to_ir, export_dsn, import_ses, kicad_version, load_board,
-                    lock_refs, prepare_for_router, routing_stats, save_board, strip_routing)
+                    lock_refs, min_track_width_um, prepare_for_router, routing_stats, save_board,
+                    strip_routing)
 import numpy as np
 
 from .placement import (PlacementConfig, PlacementProblem, PlacementResult, apply_result, current_metrics,
@@ -188,7 +189,8 @@ def run(cfg: RunConfig, log=print) -> dict:
     locked_moved = [c.ref for c, o in zip(best_ir.components, ir.components)
                     if c.locked and (abs(c.x - o.x) > 1e-6 or abs(c.y - o.y) > 1e-6 or c.rotation != o.rotation)]
 
-    rcfg = RoutingConfig(max_passes=cfg.route_passes, timeout_s=cfg.route_timeout_s)
+    rcfg = RoutingConfig(max_passes=cfg.route_passes, timeout_s=cfg.route_timeout_s,
+                         neck_width_um=min_track_width_um(board) or None)
     routing = None
     save_board(board, final_board_path)
     if cfg.route:

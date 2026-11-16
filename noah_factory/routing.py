@@ -28,6 +28,10 @@ class RoutingConfig:
     max_passes: int = 30
     timeout_s: int = 300
     threads: int = 2
+    # Narrowest trace the router may use when necking into pads. Freerouting reads it from
+    # .kicad_pro but truncates to whole micrometres (198.12 um -> 198 um < KiCad minimum),
+    # so the pipeline passes the board minimum rounded up.
+    neck_width_um: int | None = None
 
     def __post_init__(self):
         if not self.java:
@@ -61,6 +65,8 @@ def run_freerouting(dsn: Path, ses: Path, cfg: RoutingConfig, log_path: Path,
         f"--router.max_threads={cfg.threads}",
         f"--router.job_timeout={job_s // 3600:02d}:{job_s % 3600 // 60:02d}:{job_s % 60:02d}",
     ]
+    if cfg.neck_width_um:
+        cmd.append(f"--router.neck_width_um={cfg.neck_width_um}")
     t0 = time.monotonic()
     killed = False
     with log_path.open("w") as log:
