@@ -59,12 +59,12 @@
 
 **[P8] The False Dawn: Reevaluating Google's Reinforcement Learning for Chip Macro Placement [칩-레벨, 비판]**
 - 저자/연도: Igor L. Markov, arXiv:2306.09633 (2023, 이후 개정) — [deeppaper 요약](https://arxiv.deeppaper.ai/papers/2306.09633v10?locale=en)
-- 주장: Google RL이 인간 설계자, Simulated Annealing, 상용 소프트웨어 모두에 뒤처진다 — [ISPD 검색 스니펫 요약](https://arxiv.org/abs/2302.11014v3)
+- 주장: Google RL이 인간 설계자, Simulated Annealing, 상용 소프트웨어 모두에 뒤처진다. 새 AlphaChip 버전에서도 Nature 논문의 결함이 남아 있다고 본다 — [deeppaper 요약](https://arxiv.deeppaper.ai/papers/2306.09633v10?locale=en); [AlphaChip 논쟁 정리](https://wiki.krisyotam.com/content/wikipedia_en_all_nopic_2026-03/AlphaChip_(controversy))
 
 **[P9] That Chip Has Sailed: A Critique of Unfounded Skepticism Around AI for Chip Design [칩-레벨, 저자 측 반박]**
 - 저자/연도: Anna Goldie, Azalia Mirhoseini, Jeff Dean, arXiv:2411.10053 (2024-11) — [arXiv](https://arxiv.org/abs/2411.10053v1)
 - 주장: Cheng 등은 Nature의 방법론(사전학습 등)을 적용하지 않았고, Markov의 메타분석은 편향됐으며, 조사 결과 부정행위 증거는 없었다(저자 측 주장으로, 비판자들이 다투고 있음) — [arXiv HTML](https://arxiv.org/html/2411.10053v1)
-- 학계 반응: CACM은 Nature 부록과 갱신이 비판을 다시 불붙였고, Google이 벤치마크 공유를 거부했다고 보도했다 — [CACM "Updates Spark Uproar"](https://cacm.acm.org/news/updates-spark-uproar). Nature는 성능 주장에 대한 독립 조사와 편집자 노트를 게재했다 — [검색 결과(Nature 편집자 노트)](https://ideas.repec.org/a/nat/nature/v594y2021i7862d10.1038_s41586-021-03544-w.html)
+- 학계 반응: CACM은 Nature 부록과 갱신이 비판을 다시 불붙였고, Google이 벤치마크 공유를 거부했다고 보도했다 — [CACM "Updates Spark Uproar"](https://cacm.acm.org/news/updates-spark-uproar). Nature는 성능 주장에 대한 독립 조사를 알리는 편집자 노트를 붙였고, 2024년에 조사를 거쳐 부록(addendum)을 게재했다. 일부 출처는 이 부록에서 상용 설계 소프트웨어의 좌표 데이터를 썼다는 점이 공개됐다고 전한다 — [AlphaChip 논쟁 정리](https://wiki.krisyotam.com/content/wikipedia_en_all_nopic_2026-03/AlphaChip_(controversy)); [CACM](https://cacm.acm.org/news/updates-spark-uproar) (2차 출처라 Nature 원문은 확인하지 못함)
 
 **[P10] Graph Neural Networks for Automatic Addition of Optimizing Components in Printed Circuit Board Schematics**
 - 저자/연도: Plettenberg, Alcalde, Sick, Thomas, arXiv:2506.10577 (2025-06) — [arXiv HTML](https://arxiv.org/html/2506.10577v1)
@@ -127,15 +127,12 @@ PCB 라우팅용 학습 기반 연구는 주로 부분 문제에 집중돼 있�
 - freerouting 비교: OrthoRoute 저장소에 따르면 PCBWorld 저자들이 OrthoRoute를 Freerouting, KiCadRoutingTools, 여러 학습형 라우팅 에이전트와 함께 벤치마크했다 — [GitHub OrthoRoute](https://github.com/bbenchoff/OrthoRoute)
 - 서비스 관련성: **매우 높음.** 자사 라우팅 엔진을 freerouting 등과 공정하게 비교하는 사내 평가 프레임으로 바로 쓸 수 있다.
 
-**[R6] (참고) 고속·차동 페어 관련 [칩-레벨]**
-- 차동 넷 쌍 제약을 다룬 심층 RL 상세 라우팅은 커스텀 IC 대상 연구(ACM DOI 10.1145/3569052.3571874)로만 확인됐다 — [검색 결과 요약](https://ojs.aaai.org/index.php/AAAI/article/view/26030/25802)(검색 세션 내 언급). PCB용은 아니다.
-
 ### Inferences
 - 90분 SLA에서는 Freerouting이나 상용 오토라우터 같은 검증된 결정론적 라우터를 기본 엔진으로 두고, ML은 팬아웃, 넷 순서, 탐색 영역 추천 같은 가이드에 쓰는 하이브리드가 학술 근거와 맞는다(R1, R2, R4, R5).
 - 고속 신호(임피던스 제어, 길이 매칭, 차동 페어)는 학습 기반 연구가 사실상 비어 있다. 서비스는 규칙·제약 기반으로 처리하고, 설계 근거에 "적용한 제약"을 명시하는 편이 안전하다.
 
 ### Gaps
-- PCB 차동 페어·길이 매칭·임피던스 제어 라우팅을 ML로 다룬 동료심사 논문을 찾지 못했다.
+- PCB 차동 페어·길이 매칭·임피던스 제어 라우팅을 ML로 다룬 동료심사 논문을 찾지 못했다. 검색 요약에서 차동 넷 쌍 제약을 다룬 커스텀 IC 상세 라우팅 심층 RL 논문(2023, ACM DOI 10.1145/3569052.3571874로 표기)이 언급됐지만, 학회명(ICCAD인지 ISPD인지)과 서지를 확인하지 못해 인용 목록에서 뺐다. 칩-레벨 연구라 PCB용도 아니다.
 - PCBWorld 논문의 구체 수치(완성률, 라우터별 점수)는 원문 접근 차단으로 확인하지 못했다.
 - "TRouter: Thermal-driven PCB Routing via Non-Local Crisscross Attention Networks"는 Bohrium 목록에서 제목만 확인됐고, 학회·연도·결과는 확인하지 못했다 — [Bohrium](https://www.bohrium.com/paper-details/trouter-thermal-driven-pcb-routing-via-non-local-crisscross-attention-networks/865002220448382999-2522)
 - DeepPCB 라우팅 기술을 다룬 학술 논문(동료심사)을 확인하지 못했다.
