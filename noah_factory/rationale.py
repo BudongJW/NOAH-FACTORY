@@ -43,7 +43,8 @@ def build_evidence(store: EvidenceStore, *, before: dict, after: dict, locked: l
     if congestion:
         ids["congestion"] = store.add("metric", "routing_congestion", congestion["after"]["ace5"],
                                       tool=tools["placer"],
-                                      detail={"input_ace5": congestion["before"]["ace5"],
+                                      detail={"top_share_pct": 5,  # ACE5 = mean of the busiest 5% bins
+                                              "input_ace5": congestion["before"]["ace5"],
                                               "hot_bins_pct": congestion["after"]["hot_bins_pct"],
                                               "input_hot_bins_pct": congestion["before"]["hot_bins_pct"]}).id
     if density:
