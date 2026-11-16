@@ -1,0 +1,409 @@
+[
+  {
+    "board": "ecc83",
+    "baseline": {
+      "hpwl_mm": 243.0,
+      "decap_pass": 0,
+      "decap_total": 0,
+      "route_stats": {
+        "track_length_mm": 211.0,
+        "via_count": 0,
+        "segment_count": 59
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 23,
+        "by_category": {
+          "environment": 15,
+          "cosmetic": 2,
+          "parity": 6
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 15,
+          "footprint_symbol_mismatch": 6,
+          "silk_edge_clearance": 2
+        }
+      },
+      "lock": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6",
+        "P7",
+        "P8"
+      ],
+      "parts": 15
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/ecc83/ecc83-pp.kicad_pcb",
+      "parts": 15,
+      "nets": 13,
+      "layers": 2,
+      "locked": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6",
+        "P7",
+        "P8"
+      ],
+      "timings": {
+        "intake_s": 0.04,
+        "placement_s": 5.25,
+        "routing_s": 3.82,
+        "verification_s": 0.79,
+        "report_s": 0.2,
+        "export_s": 0.93,
+        "total_s": 11.14
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 243.0,
+          "decap_pass": 0,
+          "decap_total": 0
+        },
+        "best": {
+          "hpwl_mm": 280.4,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 0,
+          "decap_total": 0,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 4,
+            "cost": 229.2,
+            "hpwl_mm": 280.4,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 21248,
+              "accepted": 8854,
+              "anneal_time_s": 4.9,
+              "time_s": 4.94,
+              "T0": 9035.097212901166
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 1,
+            "cost": 245.3,
+            "hpwl_mm": 287.9,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 21248,
+              "accepted": 9387,
+              "anneal_time_s": 4.87,
+              "time_s": 4.91,
+              "T0": 14177.362692990022
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 2,
+            "cost": 262.0,
+            "hpwl_mm": 303.0,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 21248,
+              "accepted": 7621,
+              "anneal_time_s": 4.97,
+              "time_s": 5.01,
+              "T0": 6147.479668501121
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "returncode": 0,
+        "timed_out": false,
+        "time_s": 3.78,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40,
+        "prepared": {
+          "pours_removed": 1,
+          "copper_graphics_keepouts": 0
+        },
+        "imported": true
+      },
+      "route_stats": {
+        "track_length_mm": 275.9,
+        "via_count": 0,
+        "segment_count": 62
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 24,
+        "by_category": {
+          "cosmetic": 3,
+          "environment": 15,
+          "parity": 6
+        },
+        "errors_by_category": {
+          "cosmetic": 1
+        },
+        "by_type": {
+          "lib_footprint_issues": 15,
+          "footprint_symbol_mismatch": 6,
+          "silk_edge_clearance": 2,
+          "silk_over_copper": 1
+        }
+      },
+      "claims": {
+        "verified": 7,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "ecc83-pp-B_Adhesive.gba",
+          "ecc83-pp-B_Courtyard.gbr",
+          "ecc83-pp-B_Fab.gbr",
+          "ecc83-pp-B_Mask.gbs",
+          "ecc83-pp-B_Paste.gbp",
+          "ecc83-pp-B_Silkscreen.gbo",
+          "ecc83-pp-Edge_Cuts.gm1",
+          "ecc83-pp-F_Adhesive.gta",
+          "ecc83-pp-F_Courtyard.gbr",
+          "ecc83-pp-F_Fab.gbr",
+          "ecc83-pp-F_Mask.gts",
+          "ecc83-pp-F_Paste.gtp",
+          "ecc83-pp-F_Silkscreen.gto",
+          "ecc83-pp-Margin.gbr",
+          "ecc83-pp-User_Comments.gbr",
+          "ecc83-pp-User_Drawings.gbr",
+          "ecc83-pp-User_Eco1.gbr",
+          "ecc83-pp-User_Eco2.gbr",
+          "ecc83-pp-bottom_cu.gbl",
+          "ecc83-pp-job.gbrjob",
+          "ecc83-pp-top_cu.gtl",
+          "ecc83-pp.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "error": null,
+    "place_time_per_seed_s": 11.0,
+    "wall_s": 12.1
+  },
+  {
+    "board": "sonde_xilinx",
+    "baseline": {
+      "hpwl_mm": 609.2,
+      "decap_pass": 0,
+      "decap_total": 1,
+      "route_stats": {
+        "track_length_mm": 637.8,
+        "via_count": 3,
+        "segment_count": 208
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 50,
+        "by_category": {
+          "environment": 25,
+          "parity": 25
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 25,
+          "footprint_symbol_mismatch": 25
+        }
+      },
+      "lock": [
+        "J1",
+        "J2",
+        "P1"
+      ],
+      "parts": 25
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/sonde xilinx/sonde xilinx.kicad_pcb",
+      "parts": 25,
+      "nets": 42,
+      "layers": 2,
+      "locked": [
+        "J1",
+        "J2",
+        "P1"
+      ],
+      "timings": {
+        "intake_s": 0.05,
+        "placement_s": 15.54,
+        "routing_s": 8.47,
+        "verification_s": 0.92,
+        "report_s": 0.19,
+        "export_s": 1.14,
+        "total_s": 26.54
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 609.2,
+          "decap_pass": 0,
+          "decap_total": 1
+        },
+        "best": {
+          "hpwl_mm": 755.5,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 0,
+          "decap_total": 1,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 1,
+            "cost": 662.0,
+            "hpwl_mm": 755.5,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 40960,
+              "accepted": 10567,
+              "anneal_time_s": 15.03,
+              "time_s": 15.11,
+              "T0": 6819.775648081642
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 4,
+            "cost": 707.9,
+            "hpwl_mm": 800.4,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 39680,
+              "accepted": 11148,
+              "anneal_time_s": 15.05,
+              "time_s": 15.1,
+              "T0": 7089.46571738518
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 3,
+            "cost": 722.4,
+            "hpwl_mm": 814.0,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 41472,
+              "accepted": 11968,
+              "anneal_time_s": 15.08,
+              "time_s": 15.13,
+              "T0": 9183.121933875296
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "returncode": 0,
+        "timed_out": false,
+        "time_s": 8.42,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40,
+        "prepared": {
+          "pours_removed": 1,
+          "copper_graphics_keepouts": 8
+        },
+        "imported": true
+      },
+      "route_stats": {
+        "track_length_mm": 962.5,
+        "via_count": 8,
+        "segment_count": 274
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 61,
+        "by_category": {
+          "cosmetic": 11,
+          "environment": 25,
+          "parity": 25
+        },
+        "errors_by_category": {
+          "cosmetic": 10
+        },
+        "by_type": {
+          "lib_footprint_issues": 25,
+          "footprint_symbol_mismatch": 25,
+          "silk_overlap": 6,
+          "silk_over_copper": 4,
+          "silk_edge_clearance": 1
+        }
+      },
+      "claims": {
+        "verified": 9,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "sonde xilinx-B_Adhesive.gba",
+          "sonde xilinx-B_Courtyard.gbr",
+          "sonde xilinx-B_Fab.gbr",
+          "sonde xilinx-B_Mask.gbs",
+          "sonde xilinx-B_Paste.gbp",
+          "sonde xilinx-B_Silkscreen.gbo",
+          "sonde xilinx-Edge_Cuts.gm1",
+          "sonde xilinx-F_Adhesive.gta",
+          "sonde xilinx-F_Courtyard.gbr",
+          "sonde xilinx-F_Fab.gbr",
+          "sonde xilinx-F_Mask.gts",
+          "sonde xilinx-F_Paste.gtp",
+          "sonde xilinx-F_Silkscreen.gto",
+          "sonde xilinx-Margin.gbr",
+          "sonde xilinx-User_Comments.gbr",
+          "sonde xilinx-User_Drawings.gbr",
+          "sonde xilinx-User_Eco1.gbr",
+          "sonde xilinx-User_Eco2.gbr",
+          "sonde xilinx-bottom_copper.gbl",
+          "sonde xilinx-job.gbrjob",
+          "sonde xilinx-top_copper.gtl",
+          "sonde xilinx.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "error": null,
+    "place_time_per_seed_s": 15.0,
+    "wall_s": 27.5
+  }
+]
