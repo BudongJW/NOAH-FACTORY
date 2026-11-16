@@ -28,7 +28,8 @@ from .verify import kicad_cli_version, run_drc
 
 PROJECT_SUFFIXES = (".kicad_pro", ".kicad_sch", ".kicad_dru")
 # Above this courtyard-bbox area share of the board (per side), the axis-aligned bbox placer
-# cannot reliably find an overlap-free placement (measured: StickHub at 96-101% fails).
+# cannot reliably find an overlap-free placement (measured: StickHub at 96% front / 191% back
+# fails; its 45-degree parts inflate their axis-aligned boxes).
 DENSITY_LIMIT_PCT = 85.0
 PROJECT_FILES = ("sym-lib-table", "fp-lib-table")
 

@@ -80,6 +80,8 @@ def main() -> int:
     ap.add_argument("--route-timeout", type=int, default=600)
     ap.add_argument("--out", type=Path, default=ROOT / "bench" / "results")
     ap.add_argument("--summary-only", action="store_true", help="rewrite summary.md from results.json")
+    ap.add_argument("--replace-from", type=Path, help="with --summary-only: take matching boards from DIR")
+    ap.add_argument("--replace-note", default="", help="note shown for replaced rows")
     ap.add_argument("--control", action="store_true",
                     help="also route the original placement with the same pipeline (control arm)")
     a = ap.parse_args()
@@ -87,6 +89,11 @@ def main() -> int:
     a.out.mkdir(parents=True, exist_ok=True)
     if a.summary_only:
         rows = json.loads((a.out / "results.json").read_text())
+        if a.replace_from:
+            newer = {r["board"]: r for r in json.loads((a.replace_from / "results.json").read_text())}
+            for i, r in enumerate(rows):
+                if r["board"] in newer:
+                    rows[i] = newer[r["board"]] | {"note": a.replace_note or "re-measured"}
         fill_density(rows)
         (a.out / "results.json").write_text(json.dumps(rows, ensure_ascii=False, indent=2, default=str))
         write_summary(rows, a.out / "summary.md")
@@ -190,9 +197,13 @@ def write_summary(rows: list[dict], path: Path) -> None:
               "최적화합니다. HPWL이 짧다고 더 좋은 설계라는 뜻은 아닙니다.",
               "- '전기 DRC'는 kicad-cli가 보고한 전기 규칙 위반(클리어런스·단락·미연결 비아 등) 수입니다. "
               "라이브러리 미설치 경고, 실크 문제, 회로도 라이브러리 이름 불일치는 제외했습니다.",
-              "- '부품 면적'은 코트야드를 감싸는 사각형 면적의 합 ÷ 보드 면적(관통홀 부품은 양면 모두 계산)입니다. "
-              "85%를 넘는 보드(⚠)는 현재 사각형 근사 배치기의 한계를 넘는 밀집 설계입니다.",
+              "- '부품 면적'은 현재 회전 상태에서 코트야드를 감싸는 축 정렬 사각형 면적의 합 ÷ 보드 면적입니다"
+              "(관통홀 부품은 양면 모두 계산). 배치기가 실제로 쓰는 모델이라 45° 회전 부품은 크게 계산됩니다. "
+              "85%를 넘는 보드(⚠)는 현재 배치기의 한계를 넘는 밀집 설계입니다.",
               "- 각 보드 1회 실행 결과이며 시드에 따라 달라집니다.", ""]
+    notes = [f"- **{r['board']}**: {r['note']}" for r in rows if r.get("note")]
+    if notes:
+        lines += ["## 재측정", ""] + notes + [""]
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
