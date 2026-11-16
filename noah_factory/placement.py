@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from .congestion import CongestionConfig, CongestionGrid
 from .ir import EXTERNAL_CONNECTOR, DesignIR, net_role, rotate
 
 
@@ -41,6 +42,9 @@ class PlacementConfig:
     grid_mm: float = 0.05
     init: str = "random"  # "random" or "current"
     edge_refs: tuple[str, ...] = ()
+    # Routing congestion (RUDY) term; 0 disables it in the cost (metrics are still reported).
+    w_congestion: float = 0.0
+    congestion: CongestionConfig = field(default_factory=CongestionConfig)
 
 
 @dataclass
@@ -140,6 +144,20 @@ class PlacementProblem:
         self.comp_nets = [sorted(s) for s in comp_nets]
         self.net_w_arr = np.array(self.net_w)
 
+        # Congestion model inputs: pins per routed net, plane-carried nets, each part's routed pins.
+        pour = set(ir.board.pour_nets)
+        self.net_npins = [len(p) for p in self.nets]
+        self.net_factor = [cfg.congestion.pour_factor if name in pour else 1.0 for name in self.net_names]
+        routed_pins = np.zeros(len(pin_comp), dtype=bool)
+        for pins in self.nets:
+            routed_pins[pins] = True
+        order = np.argsort(self.pin_comp, kind="stable")
+        bounds = np.searchsorted(self.pin_comp[order], np.arange(n + 1))
+        self.comp_conn_pins = [order[bounds[i]:bounds[i + 1]][routed_pins[order[bounds[i]:bounds[i + 1]]]]
+                               for i in range(n)]
+        self.routing_layers = ir.board.routing_layers
+        self.track_pitch = ir.board.track_pitch_mm
+
         self.decaps: list[DecapTerm] = []
         comp_decaps: list[list[int]] = [[] for _ in range(n)]
         for i, c in enumerate(comps):
@@ -228,13 +246,81 @@ class PlacementProblem:
         return xs, ys
 
     # ----- cost terms --------------------------------------------------------
-    def net_hpwl(self, k, X, Y, K):
-        pins = self.nets[k]
+    def pins_xy(self, pins, X, Y, K):
         pc = self.pin_comp[pins]
         off = self.pin_off[pins, K[pc]]
-        px = X[pc] + off[:, 0]
-        py = Y[pc] + off[:, 1]
+        return X[pc] + off[:, 0], Y[pc] + off[:, 1]
+
+    def net_hpwl(self, k, X, Y, K):
+        px, py = self.pins_xy(self.nets[k], X, Y, K)
         return (px.max() - px.min()) + (py.max() - py.min())
+
+    # ----- congestion (RUDY) --------------------------------------------------
+    def new_grid(self) -> CongestionGrid:
+        return CongestionGrid(tuple(self.board_bbox), self.routing_layers, self.track_pitch, self.cfg.congestion)
+
+    def net_rect(self, grid, k, X, Y, K):
+        px, py = self.pins_xy(self.nets[k], X, Y, K)
+        return grid.net_rect(px, py, self.net_npins[k], self.net_factor[k])
+
+    def comp_pin_bins(self, grid, i, X, Y, K):
+        pins = self.comp_conn_pins[i]
+        if not len(pins):
+            return np.zeros(0, dtype=int), np.zeros(0, dtype=int)
+        px, py = self.pins_xy(pins, X, Y, K)
+        return grid.pin_bins(px, py)
+
+    def build_congestion(self, X, Y, K):
+        """Full congestion state: grid, per-net rectangles, per-part pin bins."""
+        grid = self.new_grid()
+        rects = [self.net_rect(grid, k, X, Y, K) for k in range(len(self.nets))]
+        for r in rects:
+            grid.add_rect(r)
+        pbins = [self.comp_pin_bins(grid, i, X, Y, K) for i in range(self.n)]
+        for b in pbins:
+            grid.add_pins(b)
+        return grid, rects, pbins
+
+    def update_congestion(self, state, S, X, Y, K):
+        """Move the contributions of parts S (already moved in X/Y/K) to their new place.
+        Returns (penalty change, undo record)."""
+        grid, rects, pbins = state
+        nets = sorted({k for i in S for k in self.comp_nets[i]})
+        old_r = [rects[k] for k in nets]
+        new_r = [self.net_rect(grid, k, X, Y, K) for k in nets]
+        old_p = [pbins[i] for i in S]
+        new_p = [self.comp_pin_bins(grid, i, X, Y, K) for i in S]
+        region = grid.region_of(old_r + new_r, old_p + new_p)
+        if region is None:
+            return 0.0, None
+        before = grid.penalty(region)
+        for r in old_r:
+            grid.add_rect(r, -1.0)
+        for k, r in zip(nets, new_r):
+            grid.add_rect(r, 1.0)
+            rects[k] = r
+        for b in old_p:
+            grid.add_pins(b, -1.0)
+        for i, b in zip(S, new_p):
+            grid.add_pins(b, 1.0)
+            pbins[i] = b
+        return grid.penalty(region) - before, (nets, old_r, new_r, list(S), old_p, new_p)
+
+    def undo_congestion(self, state, undo) -> None:
+        if undo is None:
+            return
+        grid, rects, pbins = state
+        nets, old_r, new_r, S, old_p, new_p = undo
+        for r in new_r:
+            grid.add_rect(r, -1.0)
+        for k, r in zip(nets, old_r):
+            grid.add_rect(r, 1.0)
+            rects[k] = r
+        for b in new_p:
+            grid.add_pins(b, -1.0)
+        for i, b in zip(S, old_p):
+            grid.add_pins(b, 1.0)
+            pbins[i] = b
 
     def overlap_row(self, i, X, Y, K, AB):
         c = self.cfg.clearance_mm
@@ -357,9 +443,10 @@ class PlacementProblem:
                   "limit_mm": self.cfg.edge_margin_mm,
                   "pass": self.edge_distance(i, AB) <= self.cfg.edge_margin_mm}
                  for i in np.where(self.edge)[0]]
+        congestion = self.build_congestion(X, Y, K)[0].metrics()
         return {"hpwl_mm": round(hpwl, 1), "weighted_hpwl": round(whpwl, 1),
                 "overlaps": overlaps, "outside": outside, "locked_overhang": locked_overhang,
-                "decaps": decaps, "edges": edges}
+                "decaps": decaps, "edges": edges, "congestion": congestion}
 
 
 def _initial_state(p: PlacementProblem, rng: random.Random):
@@ -444,6 +531,13 @@ def anneal(p: PlacementProblem, seed: int) -> PlacementResult:
         idx = np.array([s[0] for s in saved])
         AB[idx] = p.abs_bb(X, Y, K, idx)
 
+    use_cong = cfg.w_congestion > 0
+    cong = p.build_congestion(X, Y, K) if use_cong else None
+
+    def cong_weight(progress):
+        # congestion matters most once parts have settled near their nets
+        return cfg.w_congestion * (0.2 + 0.8 * progress)
+
     # Estimate the starting temperature from random uphill moves.
     ups = []
     for _ in range(min(200, 20 * len(movable))):
@@ -451,6 +545,10 @@ def anneal(p: PlacementProblem, seed: int) -> PlacementResult:
         before = p.local_cost(S, X, Y, K, AB, cfg.w_overlap)
         saved = apply(kind, S, arg)
         after = p.local_cost(S, X, Y, K, AB, cfg.w_overlap)
+        if use_cong:
+            dpen, undo = p.update_congestion(cong, S, X, Y, K)
+            after += cong_weight(0.0) * dpen
+            p.undo_congestion(cong, undo)
         revert(saved)
         if after > before:
             ups.append(after - before)
@@ -476,10 +574,16 @@ def anneal(p: PlacementProblem, seed: int) -> PlacementResult:
         saved = apply(kind, S, arg)
         after = p.local_cost(S, X, Y, K, AB, w_ov)
         delta = after - before
+        undo = None
+        if use_cong:
+            dpen, undo = p.update_congestion(cong, S, X, Y, K)
+            delta += cong_weight(progress) * dpen
         moves += 1
         if delta <= 0 or rng.random() < math.exp(-delta / max(T, 1e-12)):
             accepted += 1
         else:
+            if use_cong:
+                p.undo_congestion(cong, undo)
             revert(saved)
 
     anneal_time = time.monotonic() - t_start
@@ -492,7 +596,8 @@ def anneal(p: PlacementProblem, seed: int) -> PlacementResult:
     bd = p.evaluate(X, Y, K)
     cost = bd["weighted_hpwl"] + 1000.0 * (len(bd["overlaps"]) + len(bd["outside"])) + \
         sum(cfg.w_decap * max(0.0, d["distance_mm"] - d["limit_mm"]) ** 2 for d in bd["decaps"]) + \
-        sum(cfg.w_edge * max(0.0, e["distance_mm"] - e["limit_mm"]) ** 2 for e in bd["edges"])
+        sum(cfg.w_edge * max(0.0, e["distance_mm"] - e["limit_mm"]) ** 2 for e in bd["edges"]) + \
+        cfg.w_congestion * bd["congestion"]["penalty"]
     stats = {"moves": moves, "accepted": accepted, "anneal_time_s": round(anneal_time, 2),
              "time_s": round(time.monotonic() - t_start, 2), "T0": float(T0)}
     return PlacementResult(seed, X.copy(), Y.copy(), K.copy(), float(cost), bd, stats, failures)

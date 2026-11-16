@@ -111,6 +111,61 @@ def _board_mask(pcbnew, board, bbox, pitch):
     return mask
 
 
+def _routing_resources(pcbnew, board, bbox) -> tuple[int, float, list[str]]:
+    """Routing layers, track pitch and pour nets, for the congestion model.
+
+    An inner layer counts as a plane (not a routing layer) when copper pours cover more than
+    60% of the board on it; KiCad demo boards mark every layer as "signal", so the layer type
+    alone cannot tell."""
+    board_area = max((bbox[2] - bbox[0]) * (bbox[3] - bbox[1]), 1e-9)
+    pours = [z for z in board.Zones() if not z.GetIsRuleArea()]
+    cu = list(board.GetEnabledLayers().CuStack())
+    routing = 0
+    for layer in cu:
+        if layer in (pcbnew.F_Cu, pcbnew.B_Cu):
+            routing += 1
+            continue
+        covered = sum(z.CalculateOutlineArea() / NM_PER_MM ** 2 for z in pours
+                      if z.GetLayerSet().Contains(layer))
+        if covered / board_area <= 0.6:
+            routing += 1
+    ds = board.GetDesignSettings()
+    nc = ds.m_NetSettings.GetDefaultNetclass()
+    width = max(nc.GetTrackWidth(), ds.m_TrackMinWidth)
+    clearance = max(nc.GetClearance(), ds.m_MinClearance)
+    pitch = _mm(int(width + clearance)) or 0.5
+    # Only board-wide pours (planes) carry a net; small local pours and teardrops do not.
+    pour_nets = sorted({z.GetNetname() for z in pours if z.GetNetname() and not z.IsTeardropArea()
+                        and z.CalculateOutlineArea() / NM_PER_MM ** 2 / board_area >= PLANE_SHARE})
+    return max(routing, 1), pitch, pour_nets
+
+
+PLANE_SHARE = 0.3  # a pour covering at least this share of the board is treated as a plane
+
+
+def remove_layout_bound_zones(board) -> dict:
+    """Delete copper that was drawn for the old placement: teardrops and local pours.
+
+    KiCad stores teardrops as zones at fixed coordinates, and small pours are usually shaped
+    around specific parts. After re-placement they would sit where the old pads were (stale
+    copper). Board-wide pours (>= PLANE_SHARE of the board) are kept and refilled."""
+    edges = board.GetBoardEdgesBoundingBox()
+    board_area = max(_mm(edges.GetWidth()) * _mm(edges.GetHeight()), 1e-9)
+    teardrops, local = [], []
+    for z in board.Zones():
+        if z.GetIsRuleArea():
+            continue
+        if z.IsTeardropArea():
+            teardrops.append(z)
+        elif z.CalculateOutlineArea() / NM_PER_MM ** 2 / board_area < PLANE_SHARE:
+            local.append(z)
+    local_nets = sorted({z.GetNetname() for z in local})
+    with quiet_native_stderr():
+        for z in teardrops + local:
+            board.Delete(z)
+    return {"teardrops": len(teardrops), "local_pours": len(local), "local_pour_nets": local_nets}
+
+
 def board_to_ir(board, name: str = "", source_path: str = "", mask_pitch: float = 0.5) -> DesignIR:
     pcbnew = _pcbnew()
     comps: list[Component] = []
@@ -170,6 +225,7 @@ def board_to_ir(board, name: str = "", source_path: str = "", mask_pitch: float 
             # conservative: a footprint keepout blocks parts on every side
             obstacles.append((_mm(bb.GetLeft()), _mm(bb.GetTop()), _mm(bb.GetRight()), _mm(bb.GetBottom()),
                               3, "keepout"))
+    routing_layers, pitch, pour_nets = _routing_resources(pcbnew, board, bbox)
     ir_board = Board(
         bbox=bbox,
         copper_layers=board.GetCopperLayerCount(),
@@ -177,6 +233,9 @@ def board_to_ir(board, name: str = "", source_path: str = "", mask_pitch: float 
         mask_pitch=mask_pitch,
         mask=mask,
         obstacles=obstacles,
+        routing_layers=routing_layers,
+        track_pitch_mm=pitch,
+        pour_nets=pour_nets,
     )
     nets = [Net(name=n, pins=pins, role=net_role(n)) for n, pins in sorted(net_pins.items())]
     return DesignIR(name=name, components=comps, nets=nets, board=ir_board, source_path=source_path)

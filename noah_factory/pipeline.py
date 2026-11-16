@@ -17,8 +17,8 @@ from . import __version__
 from .evidence import EvidenceStore
 from .export import export_fabrication
 from .kicad import (apply_placement, board_to_ir, export_dsn, import_ses, kicad_version, load_board,
-                    lock_refs, min_track_width_um, prepare_for_router, routing_stats, save_board,
-                    strip_routing)
+                    lock_refs, min_track_width_um, prepare_for_router, remove_layout_bound_zones,
+                    routing_stats, save_board, strip_routing)
 import numpy as np
 
 from .placement import (PlacementConfig, PlacementProblem, PlacementResult, apply_result, current_metrics,
@@ -161,6 +161,8 @@ def run(cfg: RunConfig, log=print) -> dict:
         lock_refs(b, cfg.lock)
         apply_placement(b, cir)
         strip_routing(b)
+        if cfg.place:
+            remove_layout_bound_zones(b)
         path = cand_dir / f"candidate_{rank}.kicad_pcb"
         save_board(b, path)
         candidates.append({"rank": rank, "seed": res.seed, "cost": round(res.cost, 1),
@@ -186,6 +188,11 @@ def run(cfg: RunConfig, log=print) -> dict:
     lock_refs(board, cfg.lock)
     apply_placement(board, best_ir)
     strip_routing(board)
+    # Teardrops and local pours were drawn for the old placement; keep only board-wide pours.
+    zones_removed = remove_layout_bound_zones(board) if cfg.place else None
+    if zones_removed and (zones_removed["teardrops"] or zones_removed["local_pours"]):
+        log(f"[placement] removed {zones_removed['teardrops']} teardrops and "
+            f"{zones_removed['local_pours']} local pours drawn for the old placement")
     locked_moved = [c.ref for c, o in zip(best_ir.components, ir.components)
                     if c.locked and (abs(c.x - o.x) > 1e-6 or abs(c.y - o.y) > 1e-6 or c.rotation != o.rotation)]
 
@@ -220,7 +227,8 @@ def run(cfg: RunConfig, log=print) -> dict:
     store = EvidenceStore()
     ids = build_evidence(store, before=before, after=after, locked=locked, locked_moved=locked_moved,
                          legal_failures=best.legalization_failures, drc=drc, routing=routing,
-                         route_stats=rstats, tools=tools, density=density, density_limit=DENSITY_LIMIT_PCT)
+                         route_stats=rstats, tools=tools, density=density, density_limit=DENSITY_LIMIT_PCT,
+                         zones_removed=zones_removed)
     claims = build_claims(store, ids, before=before, after=after, locked=locked, drc=drc, route_stats=rstats)
     store.dump(out / "evidence.json")
     (out / "claims.json").write_text(json.dumps([asdict(c) for c in claims], ensure_ascii=False, indent=2))

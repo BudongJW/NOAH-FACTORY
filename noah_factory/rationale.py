@@ -30,9 +30,22 @@ def _fmt(v: float, d: int = 1) -> str:
 def build_evidence(store: EvidenceStore, *, before: dict, after: dict, locked: list[str],
                    locked_moved: list[str], legal_failures: list[str], drc: dict | None,
                    routing: dict | None, route_stats: dict | None, tools: dict,
-                   density: dict | None = None, density_limit: float = 85.0) -> dict:
+                   density: dict | None = None, density_limit: float = 85.0,
+                   zones_removed: dict | None = None, congestion: dict | None = None) -> dict:
     """Turn engine outputs into evidence records. Returns ids grouped by topic."""
     ids: dict = {"decaps": [], "edges": []}
+    if zones_removed and (zones_removed["teardrops"] or zones_removed["local_pours"]):
+        ids["zones"] = store.add("metric", "layout_bound_zones_removed",
+                                 zones_removed["teardrops"] + zones_removed["local_pours"],
+                                 nets=zones_removed["local_pour_nets"], tool=tools["placer"],
+                                 detail={"teardrops": zones_removed["teardrops"],
+                                         "local_pours": zones_removed["local_pours"]}).id
+    if congestion:
+        ids["congestion"] = store.add("metric", "routing_congestion", congestion["after"]["ace5"],
+                                      tool=tools["placer"],
+                                      detail={"input_ace5": congestion["before"]["ace5"],
+                                              "hot_bins_pct": congestion["after"]["hot_bins_pct"],
+                                              "input_hot_bins_pct": congestion["before"]["hot_bins_pct"]}).id
     if density:
         worst = max(density["front"], density["back"])
         ids["density"] = store.add("metric", "part_area_share_pct", worst, unit="%", limit=density_limit,
@@ -108,6 +121,17 @@ def build_claims(store: EvidenceStore, ids: dict, *, before: dict, after: dict, 
             text += (f" 현재 배치 모델이 다룰 수 있는 {_fmt(ev.limit)}%를 넘어, 겹침 없는 배치를 찾지 못할 수 "
                      f"있습니다. 기존 배치를 유지한 부분 재배치나 다각형 기반 배치가 필요합니다.")
         add("placement", text, [ids["density"]])
+    if "zones" in ids:
+        ev = store.get(ids["zones"])
+        add("placement", f"원래 배치에 맞춰 그려진 티어드롭 {ev.detail['teardrops']}개와 국소 구리 영역 "
+            f"{ev.detail['local_pours']}개를 제거했습니다. 부품이 움직이면 옛 위치에 남는 구리이기 "
+            f"때문입니다. 보드 전체를 덮는 구리 영역(평면)은 유지하고 다시 채웠습니다.", [ids["zones"]])
+    if "congestion" in ids:
+        ev = store.get(ids["congestion"])
+        add("placement", f"배선 혼잡도(상위 5% 구간 평균 사용률)는 {_fmt(ev.value, 2)}로, 입력 배치"
+            f"({_fmt(ev.detail['input_ace5'], 2)})와 비교됩니다. 용량을 넘는 구간은 전체의 "
+            f"{_fmt(ev.detail['hot_bins_pct'])}%입니다(입력 배치 {_fmt(ev.detail['input_hot_bins_pct'])}%).",
+            [ids["congestion"]])
     hb, ha = before["hpwl_mm"], after["hpwl_mm"]
     pct = store.get(ids["hpwl"]).detail["abs_change_pct"]
     direction = "줄었습니다" if ha <= hb else "늘었습니다"

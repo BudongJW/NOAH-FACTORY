@@ -131,6 +131,10 @@ class Board:
     # (minx, miny, maxx, maxy, side, label) with side 0 = front, 1 = back, 2 = inner layer
     # (blocks through-hole parts only), 3 = every side (footprint keepout).
     obstacles: list[tuple[float, float, float, float, int, str]] = field(default_factory=list)
+    # Routing resources for the congestion model.
+    routing_layers: int = 2  # copper layers available for tracks (inner plane layers excluded)
+    track_pitch_mm: float = 0.5  # default track width + clearance (at least the board minimums)
+    pour_nets: list[str] = field(default_factory=list)  # nets carried by a copper pour
 
     def inside(self, x: float, y: float) -> bool:
         if not self.mask:
