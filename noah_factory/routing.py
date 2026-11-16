@@ -50,31 +50,37 @@ def run_freerouting(dsn: Path, ses: Path, cfg: RoutingConfig, log_path: Path,
     """extra_inputs: .kicad_pro (minimum track width) and .kicad_dru (custom clearance rules);
     the Specctra export drops both, so Freerouting would otherwise route below KiCad's rules."""
     design = "+".join([str(dsn)] + [str(p) for p in (extra_inputs or []) if p.exists()])
+    # Freerouting's own job timeout stops the router gracefully and still writes the session
+    # (best result so far). Killing the process instead loses all routing work.
+    job_s = max(30, cfg.timeout_s - 40)
     cmd = [
         cfg.java, "-jar", cfg.jar,
         "-de", design, "-do", str(ses),
         "--gui.enabled=false",
         f"--router.autorouter.max_passes={cfg.max_passes}",
         f"--router.max_threads={cfg.threads}",
+        f"--router.job_timeout={job_s // 3600:02d}:{job_s % 3600 // 60:02d}:{job_s % 60:02d}",
     ]
     t0 = time.monotonic()
-    timed_out = False
+    killed = False
     with log_path.open("w") as log:
         try:
-            proc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=cfg.timeout_s,
+            proc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=cfg.timeout_s + 60,
                                   cwd=str(dsn.parent))
             code = proc.returncode
         except subprocess.TimeoutExpired:
-            timed_out = True
+            killed = True
             code = -1
     elapsed = time.monotonic() - t0
     text = log_path.read_text(errors="replace")
     scores = SCORE_LINE.findall(text)
     last = scores[-1] if scores else None
+    timed_out = killed or "state: TIMED_OUT" in text
     return {
         "ok": code == 0 and ses.exists() and not timed_out,
         "returncode": code,
         "timed_out": timed_out,
+        "killed": killed,
         "time_s": round(elapsed, 2),
         "reported_unrouted": int(last[0]) if last else None,
         "reported_violations": int(last[1]) if last else None,
