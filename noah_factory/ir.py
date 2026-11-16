@@ -127,6 +127,10 @@ class Board:
     mask_origin: tuple[float, float] = (0.0, 0.0)
     mask_pitch: float = 0.5
     mask: list[list[bool]] = field(default_factory=list)
+    # Fixed copper items outside footprints (texts, logos, keepouts):
+    # (minx, miny, maxx, maxy, side, label) with side 0 = front, 1 = back, 2 = inner layer
+    # (blocks through-hole parts only), 3 = every side (footprint keepout).
+    obstacles: list[tuple[float, float, float, float, int, str]] = field(default_factory=list)
 
     def inside(self, x: float, y: float) -> bool:
         if not self.mask:

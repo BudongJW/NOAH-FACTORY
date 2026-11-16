@@ -154,12 +154,29 @@ def board_to_ir(board, name: str = "", source_path: str = "", mask_pitch: float 
     if bbox[2] - bbox[0] <= 0 or bbox[3] - bbox[1] <= 0:
         raise ValueError("board has no usable Edge.Cuts outline")
     mask = _board_mask(pcbnew, board, bbox, mask_pitch)
+    obstacles = []
+    for d in board.GetDrawings():
+        if not d.IsOnCopperLayer():
+            continue
+        layer = d.GetLayer()
+        side = 0 if layer == pcbnew.F_Cu else 1 if layer == pcbnew.B_Cu else 2
+        bb = d.GetBoundingBox()
+        label = d.GetText() if d.GetClass() == "PCB_TEXT" else d.GetClass()
+        obstacles.append((_mm(bb.GetLeft()), _mm(bb.GetTop()), _mm(bb.GetRight()), _mm(bb.GetBottom()),
+                          side, str(label)))
+    for z in board.Zones():
+        if z.GetIsRuleArea() and z.GetDoNotAllowFootprints():
+            bb = z.GetBoundingBox()
+            # conservative: a footprint keepout blocks parts on every side
+            obstacles.append((_mm(bb.GetLeft()), _mm(bb.GetTop()), _mm(bb.GetRight()), _mm(bb.GetBottom()),
+                              3, "keepout"))
     ir_board = Board(
         bbox=bbox,
         copper_layers=board.GetCopperLayerCount(),
         mask_origin=(bbox[0], bbox[1]),
         mask_pitch=mask_pitch,
         mask=mask,
+        obstacles=obstacles,
     )
     nets = [Net(name=n, pins=pins, role=net_role(n)) for n, pins in sorted(net_pins.items())]
     return DesignIR(name=name, components=comps, nets=nets, board=ir_board, source_path=source_path)
@@ -208,6 +225,47 @@ def routing_stats(board) -> dict:
             tracks += _mm(int(t.GetLength()))
             segments += 1
     return {"track_length_mm": round(tracks, 1), "via_count": vias, "segment_count": segments}
+
+
+def prepare_for_router(board, clearance_mm: float = 0.3) -> dict:
+    """Make a board copy safe for Freerouting before DSN export.
+
+    * Copper pours (non-rule-area zones) are deleted: Freerouting treats a plane net as
+      already connected, but once parts move the refilled pour can split and leave pads
+      unconnected. Without pours, every net is routed with tracks; the pours are refilled
+      on the real board afterwards.
+    * Free copper texts and graphics are turned into keepout rule areas: the Specctra export
+      does not carry them, so the router would run tracks through them.
+    Use this on a throw-away copy only; import the session into the real board.
+    """
+    pcbnew = _pcbnew()
+    pours = [z for z in board.Zones() if not z.GetIsRuleArea()]
+    with quiet_native_stderr():
+        for z in pours:
+            board.Delete(z)
+    keepouts = 0
+    margin = int(clearance_mm * NM_PER_MM)
+    for item in list(board.GetDrawings()):
+        if not item.IsOnCopperLayer():
+            continue
+        bb = item.GetBoundingBox()
+        zone = pcbnew.ZONE(board)
+        zone.SetIsRuleArea(True)
+        zone.SetDoNotAllowTracks(True)
+        zone.SetDoNotAllowVias(True)
+        zone.SetDoNotAllowPads(False)
+        zone.SetDoNotAllowFootprints(False)
+        zone.SetDoNotAllowZoneFills(False)
+        zone.SetLayer(item.GetLayer())
+        l, t = bb.GetLeft() - margin, bb.GetTop() - margin
+        r, b = bb.GetRight() + margin, bb.GetBottom() + margin
+        outline = zone.Outline()
+        outline.NewOutline()
+        for x, y in ((l, t), (r, t), (r, b), (l, b)):
+            outline.Append(x, y)
+        board.Add(zone)
+        keepouts += 1
+    return {"pours_removed": len(pours), "copper_graphics_keepouts": keepouts}
 
 
 def export_dsn(board, path: str | Path) -> bool:

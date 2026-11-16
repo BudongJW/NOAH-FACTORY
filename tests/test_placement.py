@@ -67,6 +67,17 @@ def test_anneal_is_legal_respects_locks_and_rules():
     assert np.allclose(np.round(res.x[movable] / cfg.grid_mm) * cfg.grid_mm, res.x[movable], atol=1e-6)
 
 
+def test_parts_avoid_copper_obstacles():
+    ir = _board()
+    # a copper text block across the middle of the front side, and a keepout on all sides
+    ir.board.obstacles = [(10.0, 12.0, 40.0, 18.0, 0, "LOGO"), (42.0, 2.0, 48.0, 8.0, 3, "keepout")]
+    cfg = PlacementConfig(time_limit_s=5, moves_per_component=2000, init="random")
+    p = PlacementProblem(ir, cfg)
+    res = anneal(p, seed=11)
+    assert res.legalization_failures == []
+    assert [o for o in res.breakdown["overlaps"] if o[1].startswith("copper:")] == []
+
+
 def test_anneal_shortens_a_scrambled_chain():
     ir = _board()
     cfg = PlacementConfig(time_limit_s=5, moves_per_component=2000, init="random")

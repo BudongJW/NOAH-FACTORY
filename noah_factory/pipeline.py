@@ -17,7 +17,7 @@ from . import __version__
 from .evidence import EvidenceStore
 from .export import export_fabrication
 from .kicad import (apply_placement, board_to_ir, export_dsn, import_ses, kicad_version, load_board,
-                    lock_refs, routing_stats, save_board, strip_routing)
+                    lock_refs, prepare_for_router, routing_stats, save_board, strip_routing)
 from .placement import PlacementConfig, apply_result, current_metrics, place_candidates
 from .rationale import build_claims, build_evidence, render_report
 from .routing import RoutingConfig, freerouting_version, run_freerouting
@@ -124,8 +124,14 @@ def run(cfg: RunConfig, log=print) -> dict:
         route_dir = out / "routing"
         route_dir.mkdir(exist_ok=True)
         dsn, ses = route_dir / f"{stem}.dsn", route_dir / f"{stem}.ses"
-        export_dsn(board, dsn)
-        routing = run_freerouting(dsn, ses, rcfg, route_dir / "freerouting.log")
+        placed = route_dir / f"{stem}.placed.kicad_pcb"
+        save_board(board, placed)
+        router_copy = load_board(placed)
+        prep = prepare_for_router(router_copy)
+        export_dsn(router_copy, dsn)
+        rules = [out / "input" / f"{stem}.kicad_pro", out / "input" / f"{stem}.kicad_dru"]
+        routing = run_freerouting(dsn, ses, rcfg, route_dir / "freerouting.log", extra_inputs=rules)
+        routing["prepared"] = prep
         if ses.exists():
             routing["imported"] = import_ses(board, ses)
         timings["routing_s"] = round(time.monotonic() - t, 2)

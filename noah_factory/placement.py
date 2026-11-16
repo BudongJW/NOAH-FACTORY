@@ -174,6 +174,11 @@ class PlacementProblem:
         self.edge = np.zeros(n, dtype=bool)
         self.edge[list(edge)] = True
 
+        obs = ir.board.obstacles
+        self.obs_bb = np.array([o[:4] for o in obs], dtype=float).reshape(len(obs), 4)
+        self.obs_side = np.array([o[4] for o in obs], dtype=int)
+        self.obs_label = [o[5] for o in obs]
+
         self.board_bbox = np.array(ir.board.bbox, dtype=float)
         self.mask = np.array(ir.board.mask, dtype=bool) if ir.board.mask else None
         self.mask_origin = np.array(ir.board.mask_origin)
@@ -227,6 +232,24 @@ class PlacementProblem:
         relevant[i] = False
         return float(a[relevant].sum())
 
+    def obstacle_relevant(self, i) -> np.ndarray:
+        """Which fixed copper obstacles can collide with component i."""
+        s = self.obs_side
+        if self.thru[i]:
+            return np.ones(len(s), dtype=bool)
+        return (s == self.side[i]) | (s == 3)
+
+    def obstacle_overlap(self, i, AB) -> float:
+        if not len(self.obs_bb):
+            return 0.0
+        c = self.cfg.clearance_mm
+        bi = AB[i]
+        ob = self.obs_bb
+        ox = np.minimum(bi[2] + c, ob[:, 2]) - np.maximum(bi[0] - c, ob[:, 0])
+        oy = np.minimum(bi[3] + c, ob[:, 3]) - np.maximum(bi[1] - c, ob[:, 1])
+        a = np.clip(ox, 0, None) * np.clip(oy, 0, None)
+        return float(a[self.obstacle_relevant(i)].sum())
+
     def pair_overlap(self, i, j, AB):
         if not ((self.side[i] == self.side[j]) or self.thru[i] or self.thru[j]):
             return 0.0
@@ -271,7 +294,7 @@ class PlacementProblem:
         cost = 0.0
         for k in nets:
             cost += self.net_w[k] * self.net_hpwl(k, X, Y, K)
-        ov = sum(self.overlap_row(i, X, Y, K, AB) for i in S)
+        ov = sum(self.overlap_row(i, X, Y, K, AB) + self.obstacle_overlap(i, AB) for i in S)
         if len(S) == 2:
             ov -= self.pair_overlap(S[0], S[1], AB)
         cost += w_ov * ov
@@ -300,7 +323,16 @@ class PlacementProblem:
             for off in np.where((ox > 0.01) & (oy > 0.01) & rel)[0]:
                 j = i + 1 + int(off)
                 overlaps.append((self.refs[i], self.refs[j], round(float(ox[off] * oy[off]), 3)))
-        outside = [self.refs[i] for i in range(self.n) if self.outside(i, AB) > 1e-6]
+            if len(self.obs_bb) and not self.locked[i]:
+                ob = self.obs_bb
+                ox = np.minimum(AB[i, 2], ob[:, 2]) - np.maximum(AB[i, 0], ob[:, 0])
+                oy = np.minimum(AB[i, 3], ob[:, 3]) - np.maximum(AB[i, 1], ob[:, 1])
+                for k in np.where((ox > 0.01) & (oy > 0.01) & self.obstacle_relevant(i))[0]:
+                    overlaps.append((self.refs[i], f"copper:{self.obs_label[k]}",
+                                     round(float(ox[k] * oy[k]), 3)))
+        # Locked parts may overhang the edge on purpose (edge connectors); only movable parts count.
+        outside = [self.refs[i] for i in self.movable if self.outside(i, AB) > 1e-6]
+        locked_overhang = [self.refs[i] for i in np.where(self.locked)[0] if self.outside(i, AB) > 1e-6]
         decaps = []
         for t, d in enumerate(self.decaps):
             dist, ic = self.decap_distance(t, X, Y, K)
@@ -312,7 +344,8 @@ class PlacementProblem:
                   "pass": self.edge_distance(i, AB) <= self.cfg.edge_margin_mm}
                  for i in np.where(self.edge)[0]]
         return {"hpwl_mm": round(hpwl, 1), "weighted_hpwl": round(whpwl, 1),
-                "overlaps": overlaps, "outside": outside, "decaps": decaps, "edges": edges}
+                "overlaps": overlaps, "outside": outside, "locked_overhang": locked_overhang,
+                "decaps": decaps, "edges": edges}
 
 
 def _initial_state(p: PlacementProblem, rng: random.Random):
@@ -451,9 +484,16 @@ def legalize(p: PlacementProblem, X, Y, K, step: float = 0.25, max_radius: float
     """Greedy overlap removal: keep each component at the nearest free spot."""
     c = p.cfg.clearance_mm
     order = list(np.where(p.locked)[0]) + sorted(p.movable.tolist(), key=lambda i: -p.area[i])
-    placed: list[int] = []
-    placed_bb = np.zeros((0, 4))
+    # Fixed copper obstacles start the "placed" set. side codes: 0/1 outer, 2 inner, 3 all sides.
+    placed_bb = p.obs_bb.copy()
+    placed_side = p.obs_side.copy()
+    placed_thru = np.zeros(len(placed_bb), dtype=bool)
     failures = []
+
+    def relevant_to(i):
+        if p.thru[i]:
+            return np.ones(len(placed_side), dtype=bool)
+        return (placed_side == p.side[i]) | (placed_side == 3) | placed_thru
 
     # Candidate offsets on concentric square rings, sorted by distance.
     rings = [(0.0, 0.0)]
@@ -471,11 +511,11 @@ def legalize(p: PlacementProblem, X, Y, K, step: float = 0.25, max_radius: float
         i = int(i)
         base = p.bb[i, K[i]]
         if p.locked[i]:
-            placed.append(i)
             placed_bb = np.vstack([placed_bb, base + [X[i], Y[i], X[i], Y[i]]])
+            placed_side = np.append(placed_side, p.side[i])
+            placed_thru = np.append(placed_thru, p.thru[i])
             continue
-        rel = np.array([(p.side[j] == p.side[i]) or p.thru[j] or p.thru[i] for j in placed], dtype=bool)
-        others = placed_bb[rel] if len(placed) else placed_bb
+        others = placed_bb[relevant_to(i)]
         chosen = None
         for start in range(0, len(offs), 2048):
             chunk = offs[start:start + 2048]
@@ -497,8 +537,9 @@ def legalize(p: PlacementProblem, X, Y, K, step: float = 0.25, max_radius: float
                 break
         if chosen is None:
             failures.append(p.refs[i])
-        placed.append(i)
         placed_bb = np.vstack([placed_bb, base + [X[i], Y[i], X[i], Y[i]]])
+        placed_side = np.append(placed_side, p.side[i])
+        placed_thru = np.append(placed_thru, p.thru[i])
     return failures
 
 

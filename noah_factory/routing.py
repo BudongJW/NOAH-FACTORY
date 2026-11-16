@@ -45,10 +45,14 @@ def freerouting_version(cfg: RoutingConfig) -> str:
     return f"freerouting.jar sha256:{h.hexdigest()[:12]}"
 
 
-def run_freerouting(dsn: Path, ses: Path, cfg: RoutingConfig, log_path: Path) -> dict:
+def run_freerouting(dsn: Path, ses: Path, cfg: RoutingConfig, log_path: Path,
+                    extra_inputs: list[Path] | None = None) -> dict:
+    """extra_inputs: .kicad_pro (minimum track width) and .kicad_dru (custom clearance rules);
+    the Specctra export drops both, so Freerouting would otherwise route below KiCad's rules."""
+    design = "+".join([str(dsn)] + [str(p) for p in (extra_inputs or []) if p.exists()])
     cmd = [
         cfg.java, "-jar", cfg.jar,
-        "-de", str(dsn), "-do", str(ses),
+        "-de", design, "-do", str(ses),
         "--gui.enabled=false",
         f"--router.autorouter.max_passes={cfg.max_passes}",
         f"--router.max_threads={cfg.threads}",
