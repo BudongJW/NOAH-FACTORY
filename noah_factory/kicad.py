@@ -239,6 +239,7 @@ def prepare_for_router(board, clearance_mm: float = 0.3, drop_pours: bool = Fals
     Use this on a throw-away copy only; import the session into the real board.
     """
     pcbnew = _pcbnew()
+    clamped = clamp_netclasses_to_board_minimums(board)
     pours = [z for z in board.Zones() if not z.GetIsRuleArea()] if drop_pours else []
     with quiet_native_stderr():
         for z in pours:
@@ -265,7 +266,36 @@ def prepare_for_router(board, clearance_mm: float = 0.3, drop_pours: bool = Fals
             outline.Append(x, y)
         board.Add(zone)
         keepouts += 1
-    return {"pours_removed": len(pours), "copper_graphics_keepouts": keepouts}
+    return {"pours_removed": len(pours), "copper_graphics_keepouts": keepouts, "netclasses_clamped": clamped}
+
+
+def clamp_netclasses_to_board_minimums(board) -> list[str]:
+    """Raise net-class track width, clearance and via size to the board's minimum constraints.
+
+    The Specctra export writes net-class values; when a net class is looser than the board
+    minimums (e.g. 0.2 mm tracks under a 0.3 mm board minimum), the router produces copper that
+    KiCad's DRC then rejects. Returns the names of the classes that were changed."""
+    ds = board.GetDesignSettings()
+    ns = ds.m_NetSettings
+    classes = [ns.GetDefaultNetclass()]
+    try:
+        classes += list(dict(ns.GetNetclasses()).values())
+    except (TypeError, AttributeError):
+        pass
+    min_w, min_c = ds.m_TrackMinWidth, ds.m_MinClearance
+    min_via, min_ring = ds.m_ViasMinSize, ds.m_ViasMinAnnularWidth
+    min_drill = getattr(ds, "m_MinThroughDrill", 0)
+    changed = []
+    for nc in classes:
+        before = (nc.GetTrackWidth(), nc.GetClearance(), nc.GetViaDiameter(), nc.GetViaDrill())
+        drill = max(nc.GetViaDrill(), min_drill)
+        nc.SetTrackWidth(max(nc.GetTrackWidth(), min_w))
+        nc.SetClearance(max(nc.GetClearance(), min_c))
+        nc.SetViaDrill(drill)
+        nc.SetViaDiameter(max(nc.GetViaDiameter(), min_via, drill + 2 * min_ring))
+        if before != (nc.GetTrackWidth(), nc.GetClearance(), nc.GetViaDiameter(), nc.GetViaDrill()):
+            changed.append(nc.GetName())
+    return changed
 
 
 def export_dsn(board, path: str | Path) -> bool:

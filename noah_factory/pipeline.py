@@ -18,7 +18,10 @@ from .evidence import EvidenceStore
 from .export import export_fabrication
 from .kicad import (apply_placement, board_to_ir, export_dsn, import_ses, kicad_version, load_board,
                     lock_refs, prepare_for_router, routing_stats, save_board, strip_routing)
-from .placement import PlacementConfig, apply_result, current_metrics, place_candidates
+import numpy as np
+
+from .placement import (PlacementConfig, PlacementProblem, PlacementResult, apply_result, current_metrics,
+                        place_candidates)
 from .rationale import build_claims, build_evidence, render_report
 from .routing import RoutingConfig, freerouting_version, run_freerouting
 from .verify import kicad_cli_version, run_drc
@@ -40,6 +43,7 @@ class RunConfig:
     candidates: int = 3
     place_time_s: float = 30.0
     init: str = "random"
+    place: bool = True
     route: bool = True
     route_passes: int = 30
     route_timeout_s: int = 300
@@ -128,8 +132,18 @@ def run(cfg: RunConfig, log=print) -> dict:
     # 2. Placement ----------------------------------------------------------
     t = time.monotonic()
     pcfg = PlacementConfig(time_limit_s=cfg.place_time_s, init=cfg.init, edge_refs=tuple(cfg.edge))
-    seeds = list(range(1, max(cfg.seeds, cfg.candidates) + 1))
-    problem, results = place_candidates(ir, pcfg, seeds, workers=cfg.workers)
+    if cfg.place:
+        seeds = list(range(1, max(cfg.seeds, cfg.candidates) + 1))
+        problem, results = place_candidates(ir, pcfg, seeds, workers=cfg.workers)
+    else:
+        # Keep the input placement (control runs: same router and checks on the original layout).
+        seeds = [0]
+        problem = PlacementProblem(ir, pcfg)
+        X = np.array([c.x for c in ir.components])
+        Y = np.array([c.y for c in ir.components])
+        K = np.zeros(problem.n, dtype=int)
+        results = [PlacementResult(0, X, Y, K, 0.0, problem.evaluate(X, Y, K),
+                                   {"moves": 0, "accepted": 0, "time_s": 0.0}, [])]
     timings["placement_s"] = round(time.monotonic() - t, 2)
     density = problem.density()
     if max(density["front"], density["back"]) > DENSITY_LIMIT_PCT:

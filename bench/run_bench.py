@@ -80,6 +80,8 @@ def main() -> int:
     ap.add_argument("--route-timeout", type=int, default=600)
     ap.add_argument("--out", type=Path, default=ROOT / "bench" / "results")
     ap.add_argument("--summary-only", action="store_true", help="rewrite summary.md from results.json")
+    ap.add_argument("--control", action="store_true",
+                    help="also route the original placement with the same pipeline (control arm)")
     a = ap.parse_args()
 
     a.out.mkdir(parents=True, exist_ok=True)
@@ -109,7 +111,17 @@ def main() -> int:
         except Exception as exc:  # keep benchmarking the other boards
             summary, error = None, f"{type(exc).__name__}: {exc}"
             print(f"  failed: {error}")
-        rows.append({"board": name, "baseline": base, "noah": summary, "error": error,
+        control = None
+        if a.control:
+            # Same router and checks on the human placement: separates placement from routing limits.
+            print("  --- control: original placement")
+            try:
+                control = run(RunConfig(input=path, out=work_root / name / "control", lock=set(base["lock"]),
+                                        place=False, init="current", route_passes=40,
+                                        route_timeout_s=a.route_timeout, export=False))
+            except Exception as exc:
+                print(f"  control failed: {type(exc).__name__}: {exc}")
+        rows.append({"board": name, "baseline": base, "noah": summary, "control": control, "error": error,
                      "place_time_per_seed_s": place_time, "wall_s": round(time.monotonic() - t0, 1)})
         (a.out / "results.json").write_text(json.dumps(rows, ensure_ascii=False, indent=2, default=str))
 
@@ -156,6 +168,23 @@ def write_summary(rows: list[dict], path: Path) -> None:
             f"{rs_n.get('via_count', '–')} ({rs_o.get('via_count')}) | "
             f"{pb['decap_pass']}/{pb['decap_total']} ({b['decap_pass']}/{b['decap_total']}) | "
             f"{n['claims']['verified']}/{n['claims']['rejected']} |")
+    if any(r.get("control") for r in rows):
+        lines += ["", "## 대조 실험: 같은 배선·검증 파이프라인으로 사람의 원본 배치를 배선", "",
+                  "배치만 사람 것으로 바꾸고 나머지(Freerouting 2단계 배선, DRC)는 동일하게 실행했습니다. "
+                  "대조군도 실패하면 한계는 배치가 아니라 배선기에 있습니다.", "",
+                  "| 보드 | NOAH 배치: 미배선 / 전기 DRC | 원본 배치: 미배선 / 전기 DRC | 사람 배선 원본: 전기 DRC | 배선 시간 NOAH / 원본 배치 (s) |",
+                  "|---|---|---|---|---|"]
+        for r in rows:
+            n, c, b = r.get("noah"), r.get("control"), r["baseline"]
+
+            def cell(s):
+                if not s:
+                    return "–"
+                return f"{s['drc'].get('unconnected', '–')} / {s['drc'].get('by_category', {}).get('electrical', 0)}"
+
+            rt = lambda s: (s or {}).get("timings", {}).get("routing_s", "–")  # noqa: E731
+            lines.append(f"| {r['board']} | {cell(n)} | {cell(c)} | "
+                         f"{b['drc'].get('by_category', {}).get('electrical', 0)} | {rt(n)} / {rt(c)} |")
     lines += ["", "## 해석 시 주의", "",
               "- 원본은 사람이 기능·기구·SI를 고려해 배치한 결과이고, NOAH는 배선 길이·겹침·디커플링·커넥터 규칙만 "
               "최적화합니다. HPWL이 짧다고 더 좋은 설계라는 뜻은 아닙니다.",
