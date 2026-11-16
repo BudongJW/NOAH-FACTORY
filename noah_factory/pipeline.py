@@ -24,6 +24,9 @@ from .routing import RoutingConfig, freerouting_version, run_freerouting
 from .verify import kicad_cli_version, run_drc
 
 PROJECT_SUFFIXES = (".kicad_pro", ".kicad_sch", ".kicad_dru")
+# Above this courtyard-bbox area share of the board (per side), the axis-aligned bbox placer
+# cannot reliably find an overlap-free placement (measured: StickHub at 96-101% fails).
+DENSITY_LIMIT_PCT = 85.0
 PROJECT_FILES = ("sym-lib-table", "fp-lib-table")
 
 
@@ -79,6 +82,10 @@ def run(cfg: RunConfig, log=print) -> dict:
     seeds = list(range(1, max(cfg.seeds, cfg.candidates) + 1))
     problem, results = place_candidates(ir, pcfg, seeds, workers=cfg.workers)
     timings["placement_s"] = round(time.monotonic() - t, 2)
+    density = problem.density()
+    if max(density["front"], density["back"]) > DENSITY_LIMIT_PCT:
+        log(f"[placement] warning: part area is {density['front']}% (front) / {density['back']}% (back) "
+            f"of the board, above the {DENSITY_LIMIT_PCT}% the bounding-box placer handles")
     cand_dir = out / "candidates"
     cand_dir.mkdir(exist_ok=True)
     candidates = []
@@ -159,7 +166,7 @@ def run(cfg: RunConfig, log=print) -> dict:
     store = EvidenceStore()
     ids = build_evidence(store, before=before, after=after, locked=locked, locked_moved=locked_moved,
                          legal_failures=best.legalization_failures, drc=drc, routing=routing,
-                         route_stats=rstats, tools=tools)
+                         route_stats=rstats, tools=tools, density=density, density_limit=DENSITY_LIMIT_PCT)
     claims = build_claims(store, ids, before=before, after=after, locked=locked, drc=drc, route_stats=rstats)
     store.dump(out / "evidence.json")
     (out / "claims.json").write_text(json.dumps([asdict(c) for c in claims], ensure_ascii=False, indent=2))
@@ -185,7 +192,7 @@ def run(cfg: RunConfig, log=print) -> dict:
 
     summary = {
         "input": str(cfg.input), "parts": len(ir.components), "nets": len(ir.nets),
-        "layers": ir.board.copper_layers, "locked": locked, "timings": timings,
+        "layers": ir.board.copper_layers, "locked": locked, "timings": timings, "density_pct": density,
         "placement": {"input": {k: before[k] for k in ("hpwl_mm",)} | {
             "decap_pass": sum(d["pass"] for d in before["decaps"]), "decap_total": len(before["decaps"])},
             "best": {"hpwl_mm": after["hpwl_mm"], "overlaps": len(after["overlaps"]),

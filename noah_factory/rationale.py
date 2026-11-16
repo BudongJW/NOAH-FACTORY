@@ -29,9 +29,15 @@ def _fmt(v: float, d: int = 1) -> str:
 
 def build_evidence(store: EvidenceStore, *, before: dict, after: dict, locked: list[str],
                    locked_moved: list[str], legal_failures: list[str], drc: dict | None,
-                   routing: dict | None, route_stats: dict | None, tools: dict) -> dict:
+                   routing: dict | None, route_stats: dict | None, tools: dict,
+                   density: dict | None = None, density_limit: float = 85.0) -> dict:
     """Turn engine outputs into evidence records. Returns ids grouped by topic."""
     ids: dict = {"decaps": [], "edges": []}
+    if density:
+        worst = max(density["front"], density["back"])
+        ids["density"] = store.add("metric", "part_area_share_pct", worst, unit="%", limit=density_limit,
+                                   passed=worst <= density_limit, tool=tools["placer"],
+                                   detail={"front": density["front"], "back": density["back"]}).id
     hb, ha = before["hpwl_mm"], after["hpwl_mm"]
     pct = (ha - hb) / hb * 100 if hb else 0.0
     ids["hpwl"] = store.add("metric", "hpwl_mm", ha, unit="mm", tool=tools["placer"],
@@ -94,6 +100,14 @@ def build_claims(store: EvidenceStore, ids: dict, *, before: dict, after: dict, 
         claims.append(validate_claim(Claim(id=f"cl_{len(claims) + 1:03d}", section=section, text=text,
                                            evidence_ids=evs), store))
 
+    if "density" in ids:
+        ev = store.get(ids["density"])
+        text = (f"부품 면적(코트야드 사각형 근사)은 보드 면적의 앞면 {_fmt(ev.detail['front'])}%, "
+                f"뒷면 {_fmt(ev.detail['back'])}%입니다.")
+        if not ev.passed:
+            text += (f" 현재 배치 모델이 다룰 수 있는 {_fmt(ev.limit)}%를 넘어, 겹침 없는 배치를 찾지 못할 수 "
+                     f"있습니다. 기존 배치를 유지한 부분 재배치나 다각형 기반 배치가 필요합니다.")
+        add("placement", text, [ids["density"]])
     hb, ha = before["hpwl_mm"], after["hpwl_mm"]
     pct = store.get(ids["hpwl"]).detail["abs_change_pct"]
     direction = "줄었습니다" if ha <= hb else "늘었습니다"

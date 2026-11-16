@@ -185,6 +185,20 @@ class PlacementProblem:
         self.mask_pitch = ir.board.mask_pitch
         self.movable = np.where(~self.locked)[0]
 
+    def density(self) -> dict:
+        """Courtyard bounding-box area per side / board area (through-hole parts count on both)."""
+        if self.mask is not None:
+            board_area = float(self.mask.sum()) * self.mask_pitch ** 2
+        else:
+            bx0, by0, bx1, by1 = self.board_bbox
+            board_area = (bx1 - bx0) * (by1 - by0)
+        out = {}
+        for name, s in (("front", 0), ("back", 1)):
+            sel = (self.side == s) | self.thru
+            out[name] = round(float(self.area[sel].sum()) / board_area * 100, 1) if board_area > 0 else 0.0
+        out["board_area_mm2"] = round(board_area, 1)
+        return out
+
     # ----- geometry helpers -------------------------------------------------
     def abs_bb(self, X, Y, K, idx=None):
         if idx is None:
@@ -441,6 +455,10 @@ def anneal(p: PlacementProblem, seed: int) -> PlacementResult:
         if after > before:
             ups.append(after - before)
     T0 = (np.mean(ups) / -math.log(0.8)) if ups else 1.0
+    if cfg.init == "current":
+        # Refinement of an existing (usually legal) placement: start cold, move locally.
+        T0 *= 0.02
+        R0 *= 0.1
     T_end = T0 * 1e-4
 
     moves = accepted = 0

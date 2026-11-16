@@ -25,7 +25,7 @@ sys.path.insert(0, str(ROOT))
 
 from noah_factory.kicad import board_to_ir, load_board, routing_stats  # noqa: E402
 from noah_factory.pipeline import RunConfig, copy_project, run  # noqa: E402
-from noah_factory.placement import current_metrics  # noqa: E402
+from noah_factory.placement import PlacementConfig, PlacementProblem, current_metrics  # noqa: E402
 from noah_factory.verify import run_drc  # noqa: E402
 
 DEMOS = Path("/usr/share/kicad/demos")
@@ -48,6 +48,7 @@ def baseline(board_path: Path, work: Path) -> dict:
     board = load_board(src)
     ir = board_to_ir(board, name=board_path.stem)
     m = current_metrics(ir)
+    density = PlacementProblem(ir, PlacementConfig()).density()
     parity = src.with_suffix(".kicad_sch").exists()
     drc = run_drc(src, work / "drc_original.json", schematic_parity=parity)
     return {
@@ -58,7 +59,17 @@ def baseline(board_path: Path, work: Path) -> dict:
         "drc": {k: v for k, v in drc.items() if k != "examples"},
         "lock": sorted(c.ref for c in ir.components if c.locked or c.kind in LOCK_KINDS),
         "parts": len(ir.components),
+        "density_pct": density,
     }
+
+
+def fill_density(rows: list[dict]) -> None:
+    """Older result files lack the density figure; it depends only on the board, so recompute it."""
+    for r in rows:
+        if "density_pct" in r["baseline"]:
+            continue
+        ir = board_to_ir(load_board(DEMOS / BOARDS[r["board"]]))
+        r["baseline"]["density_pct"] = PlacementProblem(ir, PlacementConfig()).density()
 
 
 def main() -> int:
@@ -68,9 +79,17 @@ def main() -> int:
     ap.add_argument("--seeds", type=int, default=4)
     ap.add_argument("--route-timeout", type=int, default=600)
     ap.add_argument("--out", type=Path, default=ROOT / "bench" / "results")
+    ap.add_argument("--summary-only", action="store_true", help="rewrite summary.md from results.json")
     a = ap.parse_args()
 
     a.out.mkdir(parents=True, exist_ok=True)
+    if a.summary_only:
+        rows = json.loads((a.out / "results.json").read_text())
+        fill_density(rows)
+        (a.out / "results.json").write_text(json.dumps(rows, ensure_ascii=False, indent=2, default=str))
+        write_summary(rows, a.out / "summary.md")
+        print(f"wrote {a.out / 'summary.md'}")
+        return 0
     work_root = ROOT / "runs" / "bench"
     rows = []
     for name in [b.strip() for b in a.boards.split(",") if b.strip()]:
@@ -112,13 +131,17 @@ def write_summary(rows: list[dict], path: Path) -> None:
         "자동 배선 → kicad-cli DRC. 비교 대상은 사람이 설계한 원본 보드(같은 도구로 측정).",
         "- 비율 = NOAH ÷ 원본 (1.00보다 작으면 NOAH가 더 짧음/적음).",
         "",
-        "| 보드 | 부품(고정) | 층 | 배치 s | 배선 s | 전체 s | 미배선 | 전기 DRC (원본) | HPWL 비율 | 배선 길이 비율 | 비아 (원본) | 디커플링 통과 (원본) | 근거 문장 검증/제외 |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| 보드 | 부품(고정) | 층 | 부품 면적 앞/뒤 % | 배치 s | 배선 s | 전체 s | 미배선 | 전기 DRC (원본) | HPWL 비율 | 배선 길이 비율 | 비아 (원본) | 디커플링 통과 (원본) | 근거 문장 검증/제외 |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in rows:
         b, n = r["baseline"], r["noah"]
+        dens = b.get("density_pct") or {}
+        dtext = f"{dens.get('front', '–')}/{dens.get('back', '–')}"
+        if dens and max(dens["front"], dens["back"]) > 85:
+            dtext = f"**{dtext}** ⚠"
         if n is None:
-            lines.append(f"| {r['board']} | {b['parts']} | – | – | – | – | 실패 | – | – | – | – | – | {r['error']} |")
+            lines.append(f"| {r['board']} | {b['parts']} | – | {dtext} | – | – | – | 실패 | – | – | – | – | – | {r['error']} |")
             continue
         t = n["timings"]
         drc_o = b["drc"].get("by_category", {}).get("electrical", 0)
@@ -126,7 +149,7 @@ def write_summary(rows: list[dict], path: Path) -> None:
         rs_n, rs_o = n.get("route_stats") or {}, b["route_stats"]
         pb = n["placement"]["best"]
         lines.append(
-            f"| {r['board']} | {n['parts']} ({len(n['locked'])}) | {n['layers']} | {t.get('placement_s')} | "
+            f"| {r['board']} | {n['parts']} ({len(n['locked'])}) | {n['layers']} | {dtext} | {t.get('placement_s')} | "
             f"{t.get('routing_s', '–')} | {t.get('total_s')} | {n['drc'].get('unconnected', '–')} | "
             f"{drc_n} ({drc_o}) | {_ratio(pb['hpwl_mm'], b['hpwl_mm'])} | "
             f"{_ratio(rs_n.get('track_length_mm'), rs_o.get('track_length_mm'))} | "
@@ -138,6 +161,8 @@ def write_summary(rows: list[dict], path: Path) -> None:
               "최적화합니다. HPWL이 짧다고 더 좋은 설계라는 뜻은 아닙니다.",
               "- '전기 DRC'는 kicad-cli가 보고한 전기 규칙 위반(클리어런스·단락·미연결 비아 등) 수입니다. "
               "라이브러리 미설치 경고, 실크 문제, 회로도 라이브러리 이름 불일치는 제외했습니다.",
+              "- '부품 면적'은 코트야드를 감싸는 사각형 면적의 합 ÷ 보드 면적(관통홀 부품은 양면 모두 계산)입니다. "
+              "85%를 넘는 보드(⚠)는 현재 사각형 근사 배치기의 한계를 넘는 밀집 설계입니다.",
               "- 각 보드 1회 실행 결과이며 시드에 따라 달라집니다.", ""]
     path.write_text("\n".join(lines), encoding="utf-8")
 
