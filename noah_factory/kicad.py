@@ -282,17 +282,22 @@ def clamp_netclasses_to_board_minimums(board) -> list[str]:
         classes += list(dict(ns.GetNetclasses()).values())
     except (TypeError, AttributeError):
         pass
-    min_w, min_c = ds.m_TrackMinWidth, ds.m_MinClearance
-    min_via, min_ring = ds.m_ViasMinSize, ds.m_ViasMinAnnularWidth
-    min_drill = getattr(ds, "m_MinThroughDrill", 0)
+    # The Specctra file is written in whole micrometres: round minimums *up* to 1 um, otherwise a
+    # 0.1981 mm minimum becomes 0.198 mm tracks and every one fails DRC by 0.1 um.
+    def up(nm: int) -> int:
+        return -(-int(nm) // 1000) * 1000
+
+    min_w, min_c = up(ds.m_TrackMinWidth), up(ds.m_MinClearance)
+    min_via, min_ring = up(ds.m_ViasMinSize), up(ds.m_ViasMinAnnularWidth)
+    min_drill = up(getattr(ds, "m_MinThroughDrill", 0))
     changed = []
     for nc in classes:
         before = (nc.GetTrackWidth(), nc.GetClearance(), nc.GetViaDiameter(), nc.GetViaDrill())
         drill = max(nc.GetViaDrill(), min_drill)
-        nc.SetTrackWidth(max(nc.GetTrackWidth(), min_w))
-        nc.SetClearance(max(nc.GetClearance(), min_c))
+        nc.SetTrackWidth(up(max(nc.GetTrackWidth(), min_w)))
+        nc.SetClearance(up(max(nc.GetClearance(), min_c)))
         nc.SetViaDrill(drill)
-        nc.SetViaDiameter(max(nc.GetViaDiameter(), min_via, drill + 2 * min_ring))
+        nc.SetViaDiameter(up(max(nc.GetViaDiameter(), min_via, drill + 2 * min_ring)))
         if before != (nc.GetTrackWidth(), nc.GetClearance(), nc.GetViaDiameter(), nc.GetViaDrill()):
             changed.append(nc.GetName())
     return changed
