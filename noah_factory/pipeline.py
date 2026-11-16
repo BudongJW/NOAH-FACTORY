@@ -57,6 +57,55 @@ def copy_project(board: Path, dest: Path) -> Path:
     return dest / board.name
 
 
+def _route_stage(board_path: Path, route_dir: Path, stem: str, tag: str, rcfg: RoutingConfig,
+                 rules: list[Path], drop_pours: bool) -> tuple[dict, Path]:
+    copy_ = load_board(board_path)
+    prep = prepare_for_router(copy_, drop_pours=drop_pours)
+    dsn, ses = route_dir / f"{stem}.{tag}.dsn", route_dir / f"{stem}.{tag}.ses"
+    export_dsn(copy_, dsn)
+    res = run_freerouting(dsn, ses, rcfg, route_dir / f"freerouting.{tag}.log", extra_inputs=rules)
+    res["stage"] = tag
+    res["prepared"] = prep
+    return res, ses
+
+
+def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig) -> dict:
+    """Stage 1 routes with copper pours kept (plane nets connect through the pour).
+    The pours are then refilled; if anything is still unconnected (a pour split after the parts
+    moved), stage 2 routes the rest with pours removed and the stage-1 tracks kept.
+    The session from each stage is imported into the board at board_path in place."""
+    route_dir = out / "routing"
+    route_dir.mkdir(exist_ok=True)
+    rules = [out / "input" / f"{stem}.kicad_pro", out / "input" / f"{stem}.kicad_dru"]
+    stages = []
+
+    res, ses = _route_stage(board_path, route_dir, stem, "stage1", rcfg, rules, drop_pours=False)
+    stages.append(res)
+    if ses.exists():
+        b = load_board(board_path)
+        res["imported"] = import_ses(b, ses)
+        save_board(b, board_path)
+    check = run_drc(board_path, route_dir / "drc_stage1.json", schematic_parity=False)  # refills pours
+    res["unconnected_after_refill"] = check.get("unconnected")
+
+    if check.get("ok") and check["unconnected"] > 0:
+        res2, ses2 = _route_stage(board_path, route_dir, stem, "stage2", rcfg, rules, drop_pours=True)
+        stages.append(res2)
+        if ses2.exists():
+            b = load_board(board_path)
+            res2["imported"] = import_ses(b, ses2)
+            save_board(b, board_path)
+    last = stages[-1]
+    return {
+        "ok": all(s["ok"] for s in stages),
+        "stages": stages,
+        "time_s": round(sum(s["time_s"] for s in stages), 2),
+        "reported_unrouted": last.get("reported_unrouted"),
+        "reported_violations": last.get("reported_violations"),
+        "max_passes": rcfg.max_passes,
+    }
+
+
 def run(cfg: RunConfig, log=print) -> dict:
     t_all = time.monotonic()
     timings: dict[str, float] = {}
@@ -126,25 +175,13 @@ def run(cfg: RunConfig, log=print) -> dict:
 
     rcfg = RoutingConfig(max_passes=cfg.route_passes, timeout_s=cfg.route_timeout_s)
     routing = None
+    save_board(board, final_board_path)
     if cfg.route:
         t = time.monotonic()
-        route_dir = out / "routing"
-        route_dir.mkdir(exist_ok=True)
-        dsn, ses = route_dir / f"{stem}.dsn", route_dir / f"{stem}.ses"
-        placed = route_dir / f"{stem}.placed.kicad_pcb"
-        save_board(board, placed)
-        router_copy = load_board(placed)
-        prep = prepare_for_router(router_copy)
-        export_dsn(router_copy, dsn)
-        rules = [out / "input" / f"{stem}.kicad_pro", out / "input" / f"{stem}.kicad_dru"]
-        routing = run_freerouting(dsn, ses, rcfg, route_dir / "freerouting.log", extra_inputs=rules)
-        routing["prepared"] = prep
-        if ses.exists():
-            routing["imported"] = import_ses(board, ses)
+        routing = route_two_stage(final_board_path, out, stem, rcfg)
         timings["routing_s"] = round(time.monotonic() - t, 2)
-        log(f"[routing] ok={routing['ok']} unrouted(reported)={routing['reported_unrouted']} "
-            f"({timings['routing_s']}s)")
-    save_board(board, final_board_path)
+        log(f"[routing] stages={len(routing['stages'])} ok={routing['ok']} "
+            f"unrouted(reported)={routing['reported_unrouted']} ({timings['routing_s']}s)")
 
     # 4. Verification -------------------------------------------------------
     t = time.monotonic()

@@ -227,19 +227,19 @@ def routing_stats(board) -> dict:
     return {"track_length_mm": round(tracks, 1), "via_count": vias, "segment_count": segments}
 
 
-def prepare_for_router(board, clearance_mm: float = 0.3) -> dict:
+def prepare_for_router(board, clearance_mm: float = 0.3, drop_pours: bool = False) -> dict:
     """Make a board copy safe for Freerouting before DSN export.
 
-    * Copper pours (non-rule-area zones) are deleted: Freerouting treats a plane net as
-      already connected, but once parts move the refilled pour can split and leave pads
-      unconnected. Without pours, every net is routed with tracks; the pours are refilled
-      on the real board afterwards.
     * Free copper texts and graphics are turned into keepout rule areas: the Specctra export
       does not carry them, so the router would run tracks through them.
+    * drop_pours: delete copper pours (non-rule-area zones). Freerouting treats a plane net as
+      already connected; after parts move, the refilled pour can split and strand pads. The
+      pipeline therefore routes with pours first, then (only if something is left unconnected)
+      routes again without pours so the remaining connections get tracks.
     Use this on a throw-away copy only; import the session into the real board.
     """
     pcbnew = _pcbnew()
-    pours = [z for z in board.Zones() if not z.GetIsRuleArea()]
+    pours = [z for z in board.Zones() if not z.GetIsRuleArea()] if drop_pours else []
     with quiet_native_stderr():
         for z in pours:
             board.Delete(z)
