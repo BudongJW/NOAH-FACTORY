@@ -1,0 +1,12 @@
+[project]
+name = "noah-factory"
+version = "0.1.0"
+description = "Phase 0: evidence-grounded automatic PCB placement and routing on KiCad"
+requires-python = ">=3.12"
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

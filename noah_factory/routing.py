@@ -1,0 +1,78 @@
+"""Routing through Freerouting (GPL-3.0), run as a separate headless process."""
+
+from __future__ import annotations
+
+import hashlib
+import os
+import re
+import shutil
+import subprocess
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+SCORE_LINE = re.compile(r"\((\d+) unrouted and (\d+) violations\)")
+
+
+def _default_java() -> str:
+    for cand in (os.environ.get("NOAH_JAVA"), "/opt/jdk25/bin/java", shutil.which("java")):
+        if cand and Path(cand).exists():
+            return cand
+    return "java"
+
+
+@dataclass
+class RoutingConfig:
+    jar: str = os.environ.get("NOAH_FREEROUTING_JAR", "/opt/freerouting/freerouting.jar")
+    java: str = ""
+    max_passes: int = 30
+    timeout_s: int = 300
+    threads: int = 2
+
+    def __post_init__(self):
+        if not self.java:
+            self.java = _default_java()
+
+
+def freerouting_version(cfg: RoutingConfig) -> str:
+    p = Path(cfg.jar)
+    if not p.exists():
+        return "missing"
+    h = hashlib.sha256()
+    with p.open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return f"freerouting.jar sha256:{h.hexdigest()[:12]}"
+
+
+def run_freerouting(dsn: Path, ses: Path, cfg: RoutingConfig, log_path: Path) -> dict:
+    cmd = [
+        cfg.java, "-jar", cfg.jar,
+        "-de", str(dsn), "-do", str(ses),
+        "--gui.enabled=false",
+        f"--router.autorouter.max_passes={cfg.max_passes}",
+        f"--router.max_threads={cfg.threads}",
+    ]
+    t0 = time.monotonic()
+    timed_out = False
+    with log_path.open("w") as log:
+        try:
+            proc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=cfg.timeout_s,
+                                  cwd=str(dsn.parent))
+            code = proc.returncode
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            code = -1
+    elapsed = time.monotonic() - t0
+    text = log_path.read_text(errors="replace")
+    scores = SCORE_LINE.findall(text)
+    last = scores[-1] if scores else None
+    return {
+        "ok": code == 0 and ses.exists() and not timed_out,
+        "returncode": code,
+        "timed_out": timed_out,
+        "time_s": round(elapsed, 2),
+        "reported_unrouted": int(last[0]) if last else None,
+        "reported_violations": int(last[1]) if last else None,
+        "max_passes": cfg.max_passes,
+    }

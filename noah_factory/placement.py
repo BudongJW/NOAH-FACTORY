@@ -1,0 +1,553 @@
+"""Component placement: simulated annealing with design-rule terms, then legalization.
+
+Cost = sum of weighted net HPWL
+     + overlap area between courtyards (same side, or either through-hole)
+     + area outside the board outline
+     + decoupling-capacitor distance beyond its limit (squared)
+     + distance of external connectors from the board edge (squared)
+Locked components never move.
+"""
+
+from __future__ import annotations
+
+import math
+import multiprocessing as mp
+import random
+import re
+import time
+from dataclasses import dataclass, field
+
+import numpy as np
+
+from .ir import EXTERNAL_CONNECTOR, DesignIR, net_role, rotate
+
+
+@dataclass
+class PlacementConfig:
+    seed: int = 0
+    time_limit_s: float = 30.0
+    moves_per_component: int = 3000
+    clearance_mm: float = 0.25
+    decap_limit_small_mm: float = 3.0
+    decap_limit_bulk_mm: float = 8.0
+    edge_margin_mm: float = 1.0
+    w_overlap: float = 4.0
+    w_outside: float = 40.0
+    w_decap: float = 3.0
+    w_edge: float = 2.0
+    big_net_pins: int = 12
+    ground_net_weight: float = 0.3
+    allow_rotation: bool = True
+    grid_mm: float = 0.05
+    init: str = "random"  # "random" or "current"
+    edge_refs: tuple[str, ...] = ()
+
+
+@dataclass
+class DecapTerm:
+    cap: int
+    cap_pin: int
+    net: str
+    ic_pins: np.ndarray
+    limit: float
+
+
+@dataclass
+class PlacementResult:
+    seed: int
+    x: np.ndarray
+    y: np.ndarray
+    k: np.ndarray
+    cost: float
+    breakdown: dict
+    stats: dict
+    legalization_failures: list[str] = field(default_factory=list)
+
+
+_CAP_VALUE = re.compile(r"(\d+)(?:[.,](\d+))?\s*([pnuµμm])?(\d+)?", re.IGNORECASE)
+_SCALE = {"p": 1e-12, "n": 1e-9, "u": 1e-6, "µ": 1e-6, "μ": 1e-6, "m": 1e-3, None: 1.0}
+
+
+def parse_farads(value: str) -> float | None:
+    m = _CAP_VALUE.search(value or "")
+    if not m:
+        return None
+    whole, frac, unit, trailing = m.groups()
+    unit_key = unit.lower() if unit and unit.lower() in _SCALE else unit
+    digits = frac if frac is not None else (trailing or "")
+    number = float(f"{whole}.{digits}") if digits else float(whole)
+    if unit is None:
+        return number if number < 1 else None  # bare "100" is ambiguous
+    return number * _SCALE.get(unit_key, 1.0)
+
+
+def _rotated_bbox(bbox, deg):
+    l, t, r, b = bbox
+    pts = [rotate(x, y, deg) for x, y in ((l, t), (r, t), (l, b), (r, b))]
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+class PlacementProblem:
+    def __init__(self, ir: DesignIR, cfg: PlacementConfig):
+        self.ir = ir
+        self.cfg = cfg
+        comps = ir.components
+        n = len(comps)
+        self.n = n
+        self.refs = [c.ref for c in comps]
+        self.locked = np.array([c.locked for c in comps], dtype=bool)
+        self.thru = np.array([c.has_through_hole for c in comps], dtype=bool)
+        self.side = np.array([1 if c.flipped else 0 for c in comps], dtype=int)
+        self.base_rot = np.array([c.rotation for c in comps], dtype=float)
+        self.bb = np.zeros((n, 4, 4))
+        for i, c in enumerate(comps):
+            for k in range(4):
+                self.bb[i, k] = _rotated_bbox(c.bbox, c.rotation + 90 * k)
+        self.area = (self.bb[:, 0, 2] - self.bb[:, 0, 0]) * (self.bb[:, 0, 3] - self.bb[:, 0, 1])
+
+        pin_comp, pin_off = [], []
+        pad_global: dict[tuple[int, int], int] = {}
+        for i, c in enumerate(comps):
+            for pi, p in enumerate(c.pads):
+                pad_global[(i, pi)] = len(pin_comp)
+                pin_comp.append(i)
+                pin_off.append([rotate(p.dx, p.dy, c.rotation + 90 * k) for k in range(4)])
+        self.pin_comp = np.array(pin_comp, dtype=int)
+        self.pin_off = np.array(pin_off, dtype=float).reshape(len(pin_comp), 4, 2)
+
+        self.nets: list[np.ndarray] = []
+        self.net_w: list[float] = []
+        self.net_names: list[str] = []
+        comp_nets: list[set[int]] = [set() for _ in range(n)]
+        net_pins_by_name: dict[str, np.ndarray] = {}
+        for net in ir.nets:
+            pins = np.array([pad_global[p] for p in net.pins], dtype=int)
+            net_pins_by_name[net.name] = pins
+            comps_in = set(self.pin_comp[pins].tolist())
+            if len(comps_in) < 2:
+                continue
+            k = len(self.nets)
+            self.nets.append(pins)
+            w = 1.0 if len(pins) <= cfg.big_net_pins else cfg.big_net_pins / len(pins)
+            if net.role == "ground":
+                w *= cfg.ground_net_weight
+            self.net_w.append(w)
+            self.net_names.append(net.name)
+            for ci in comps_in:
+                comp_nets[ci].add(k)
+        self.comp_nets = [sorted(s) for s in comp_nets]
+        self.net_w_arr = np.array(self.net_w)
+
+        self.decaps: list[DecapTerm] = []
+        comp_decaps: list[list[int]] = [[] for _ in range(n)]
+        for i, c in enumerate(comps):
+            if c.kind != "capacitor" or len(c.pads) != 2 or c.locked:
+                continue
+            roles = [net_role(p.net) for p in c.pads]
+            if sorted(roles) != ["ground", "power"]:
+                continue
+            pw = roles.index("power")
+            net = c.pads[pw].net
+            ic_pins = [g for g in net_pins_by_name.get(net, [])
+                       if comps[self.pin_comp[g]].kind == "ic"]
+            if not ic_pins:
+                continue
+            farads = parse_farads(c.value)
+            limit = cfg.decap_limit_small_mm if (farads is None or farads <= 1.1e-6) else cfg.decap_limit_bulk_mm
+            t = len(self.decaps)
+            self.decaps.append(DecapTerm(i, pad_global[(i, pw)], net, np.array(ic_pins), limit))
+            comp_decaps[i].append(t)
+            for g in ic_pins:
+                if t not in comp_decaps[self.pin_comp[g]]:
+                    comp_decaps[self.pin_comp[g]].append(t)
+        self.comp_decaps = comp_decaps
+
+        edge = set()
+        for i, c in enumerate(comps):
+            if c.locked:
+                continue
+            text = f"{c.footprint} {c.value}"
+            if (c.kind == "connector" and EXTERNAL_CONNECTOR.search(text)) or c.ref in cfg.edge_refs:
+                edge.add(i)
+        self.edge = np.zeros(n, dtype=bool)
+        self.edge[list(edge)] = True
+
+        self.board_bbox = np.array(ir.board.bbox, dtype=float)
+        self.mask = np.array(ir.board.mask, dtype=bool) if ir.board.mask else None
+        self.mask_origin = np.array(ir.board.mask_origin)
+        self.mask_pitch = ir.board.mask_pitch
+        self.movable = np.where(~self.locked)[0]
+
+    # ----- geometry helpers -------------------------------------------------
+    def abs_bb(self, X, Y, K, idx=None):
+        if idx is None:
+            idx = np.arange(self.n)
+        b = self.bb[idx, K[idx]]
+        return b + np.stack([X[idx], Y[idx], X[idx], Y[idx]], axis=-1)
+
+    def inside_points(self, px, py):
+        bx0, by0, bx1, by1 = self.board_bbox
+        ok = (px >= bx0) & (px <= bx1) & (py >= by0) & (py <= by1)
+        if self.mask is None:
+            return ok
+        ix = ((px - self.mask_origin[0]) / self.mask_pitch).astype(int)
+        iy = ((py - self.mask_origin[1]) / self.mask_pitch).astype(int)
+        h, w = self.mask.shape
+        valid = ok & (ix >= 0) & (ix < w) & (iy >= 0) & (iy < h)
+        res = np.zeros_like(ok)
+        res[valid] = self.mask[iy[valid], ix[valid]]
+        return res
+
+    def _samples(self, bb):
+        """9 sample points per bbox row: corners, edge midpoints, centre."""
+        l, t, r, b = bb[..., 0], bb[..., 1], bb[..., 2], bb[..., 3]
+        mx, my = (l + r) / 2, (t + b) / 2
+        xs = np.stack([l, r, l, r, mx, mx, l, r, mx], axis=-1)
+        ys = np.stack([t, t, b, b, t, b, my, my, my], axis=-1)
+        return xs, ys
+
+    # ----- cost terms --------------------------------------------------------
+    def net_hpwl(self, k, X, Y, K):
+        pins = self.nets[k]
+        pc = self.pin_comp[pins]
+        off = self.pin_off[pins, K[pc]]
+        px = X[pc] + off[:, 0]
+        py = Y[pc] + off[:, 1]
+        return (px.max() - px.min()) + (py.max() - py.min())
+
+    def overlap_row(self, i, X, Y, K, AB):
+        c = self.cfg.clearance_mm
+        bi = AB[i]
+        ox = np.minimum(bi[2] + c, AB[:, 2]) - np.maximum(bi[0] - c, AB[:, 0])
+        oy = np.minimum(bi[3] + c, AB[:, 3]) - np.maximum(bi[1] - c, AB[:, 1])
+        a = np.clip(ox, 0, None) * np.clip(oy, 0, None)
+        relevant = (self.side == self.side[i]) | self.thru | self.thru[i]
+        relevant[i] = False
+        return float(a[relevant].sum())
+
+    def pair_overlap(self, i, j, AB):
+        if not ((self.side[i] == self.side[j]) or self.thru[i] or self.thru[j]):
+            return 0.0
+        c = self.cfg.clearance_mm
+        bi, bj = AB[i], AB[j]
+        ox = min(bi[2] + c, bj[2]) - max(bi[0] - c, bj[0])
+        oy = min(bi[3] + c, bj[3]) - max(bi[1] - c, bj[1])
+        return max(0.0, ox) * max(0.0, oy)
+
+    def outside(self, i, AB):
+        bb = AB[i]
+        xs, ys = self._samples(bb)
+        ins = self.inside_points(xs, ys)
+        frac_out = 1.0 - ins.mean()
+        bx0, by0, bx1, by1 = self.board_bbox
+        beyond = max(0.0, bx0 - bb[0]) + max(0.0, by0 - bb[1]) + max(0.0, bb[2] - bx1) + max(0.0, bb[3] - by1)
+        return frac_out * (self.area[i] + 1.0) + beyond * beyond
+
+    def decap_distance(self, t, X, Y, K):
+        d = self.decaps[t]
+        c = d.cap
+        cx = X[c] + self.pin_off[d.cap_pin, K[c], 0]
+        cy = Y[c] + self.pin_off[d.cap_pin, K[c], 1]
+        pc = self.pin_comp[d.ic_pins]
+        off = self.pin_off[d.ic_pins, K[pc]]
+        dist = np.hypot(X[pc] + off[:, 0] - cx, Y[pc] + off[:, 1] - cy)
+        j = int(np.argmin(dist))
+        return float(dist[j]), int(pc[j])
+
+    def edge_distance(self, i, AB):
+        bb = AB[i]
+        bx0, by0, bx1, by1 = self.board_bbox
+        return max(0.0, min(bb[0] - bx0, bb[1] - by0, bx1 - bb[2], by1 - bb[3]))
+
+    def local_cost(self, S, X, Y, K, AB, w_ov):
+        cfg = self.cfg
+        nets = set()
+        dec = set()
+        for i in S:
+            nets.update(self.comp_nets[i])
+            dec.update(self.comp_decaps[i])
+        cost = 0.0
+        for k in nets:
+            cost += self.net_w[k] * self.net_hpwl(k, X, Y, K)
+        ov = sum(self.overlap_row(i, X, Y, K, AB) for i in S)
+        if len(S) == 2:
+            ov -= self.pair_overlap(S[0], S[1], AB)
+        cost += w_ov * ov
+        for i in S:
+            cost += cfg.w_outside * self.outside(i, AB)
+            if self.edge[i]:
+                e = max(0.0, self.edge_distance(i, AB) - cfg.edge_margin_mm)
+                cost += cfg.w_edge * e * e
+        for t in dec:
+            dist, _ = self.decap_distance(t, X, Y, K)
+            ex = max(0.0, dist - self.decaps[t].limit)
+            cost += cfg.w_decap * ex * ex
+        return cost
+
+    # ----- evaluation --------------------------------------------------------
+    def evaluate(self, X, Y, K) -> dict:
+        AB = self.abs_bb(X, Y, K)
+        hpwl = sum(self.net_hpwl(k, X, Y, K) for k in range(len(self.nets)))
+        whpwl = sum(self.net_w[k] * self.net_hpwl(k, X, Y, K) for k in range(len(self.nets)))
+        overlaps = []
+        for i in range(self.n):
+            # true courtyard overlaps only (no clearance inflation)
+            ox = np.minimum(AB[i, 2], AB[i + 1:, 2]) - np.maximum(AB[i, 0], AB[i + 1:, 0])
+            oy = np.minimum(AB[i, 3], AB[i + 1:, 3]) - np.maximum(AB[i, 1], AB[i + 1:, 1])
+            rel = (self.side[i + 1:] == self.side[i]) | self.thru[i + 1:] | self.thru[i]
+            for off in np.where((ox > 0.01) & (oy > 0.01) & rel)[0]:
+                j = i + 1 + int(off)
+                overlaps.append((self.refs[i], self.refs[j], round(float(ox[off] * oy[off]), 3)))
+        outside = [self.refs[i] for i in range(self.n) if self.outside(i, AB) > 1e-6]
+        decaps = []
+        for t, d in enumerate(self.decaps):
+            dist, ic = self.decap_distance(t, X, Y, K)
+            decaps.append({"cap": self.refs[d.cap], "ic": self.refs[ic], "net": d.net,
+                           "distance_mm": round(dist, 2), "limit_mm": d.limit,
+                           "pass": dist <= d.limit})
+        edges = [{"ref": self.refs[i], "distance_mm": round(self.edge_distance(i, AB), 2),
+                  "limit_mm": self.cfg.edge_margin_mm,
+                  "pass": self.edge_distance(i, AB) <= self.cfg.edge_margin_mm}
+                 for i in np.where(self.edge)[0]]
+        return {"hpwl_mm": round(hpwl, 1), "weighted_hpwl": round(whpwl, 1),
+                "overlaps": overlaps, "outside": outside, "decaps": decaps, "edges": edges}
+
+
+def _initial_state(p: PlacementProblem, rng: random.Random):
+    comps = p.ir.components
+    X = np.array([c.x for c in comps], dtype=float)
+    Y = np.array([c.y for c in comps], dtype=float)
+    K = np.zeros(p.n, dtype=int)
+    if p.cfg.init == "random":
+        bx0, by0, bx1, by1 = p.board_bbox
+        for i in p.movable:
+            l, t, r, b = p.bb[i, 0]
+            x_lo, x_hi = bx0 - l, bx1 - r
+            y_lo, y_hi = by0 - t, by1 - b
+            X[i] = rng.uniform(x_lo, x_hi) if x_hi > x_lo else (bx0 + bx1) / 2
+            Y[i] = rng.uniform(y_lo, y_hi) if y_hi > y_lo else (by0 + by1) / 2
+    return X, Y, K
+
+
+def anneal(p: PlacementProblem, seed: int) -> PlacementResult:
+    cfg = p.cfg
+    rng = random.Random(seed)
+    X, Y, K = _initial_state(p, rng)
+    AB = p.abs_bb(X, Y, K)
+    movable = p.movable
+    if len(movable) == 0:
+        bd = p.evaluate(X, Y, K)
+        return PlacementResult(seed, X, Y, K, 0.0, bd, {"moves": 0, "accepted": 0, "time_s": 0.0})
+
+    bx0, by0, bx1, by1 = p.board_bbox
+    R0 = 0.5 * max(bx1 - bx0, by1 - by0)
+    total_moves = cfg.moves_per_component * len(movable)
+    t_start = time.monotonic()
+
+    def propose(progress):
+        r = rng.random()
+        i = int(movable[rng.randrange(len(movable))])
+        if r < 0.55:
+            rad = R0 * (1 - progress) ** 1.5 + 0.2
+            return ("move", [i], (X[i] + rng.uniform(-rad, rad), Y[i] + rng.uniform(-rad, rad)))
+        if r < 0.70 and p.comp_nets[i]:
+            # pull toward the centroid of connected pins
+            xs, ys = [], []
+            for k in p.comp_nets[i]:
+                pins = p.nets[k]
+                pc = p.pin_comp[pins]
+                sel = pc != i
+                if not sel.any() or len(pins) > cfg.big_net_pins:
+                    continue
+                off = p.pin_off[pins[sel], K[pc[sel]]]
+                xs.extend((X[pc[sel]] + off[:, 0]).tolist())
+                ys.extend((Y[pc[sel]] + off[:, 1]).tolist())
+            if xs:
+                jitter = 1.0 + 3.0 * (1 - progress)
+                return ("move", [i], (float(np.mean(xs)) + rng.uniform(-jitter, jitter),
+                                      float(np.mean(ys)) + rng.uniform(-jitter, jitter)))
+        if r < 0.85 and len(movable) > 1:
+            j = int(movable[rng.randrange(len(movable))])
+            if j != i:
+                return ("swap", [i, j], None)
+        if cfg.allow_rotation:
+            return ("rot", [i], (K[i] + rng.choice((1, 2, 3))) % 4)
+        return ("move", [i], (X[i] + rng.uniform(-1, 1), Y[i] + rng.uniform(-1, 1)))
+
+    def apply(kind, S, arg):
+        saved = [(i, X[i], Y[i], K[i]) for i in S]
+        if kind == "move":
+            i = S[0]
+            X[i] = min(max(arg[0], bx0), bx1)
+            Y[i] = min(max(arg[1], by0), by1)
+        elif kind == "swap":
+            i, j = S
+            X[i], X[j] = X[j], X[i]
+            Y[i], Y[j] = Y[j], Y[i]
+        else:
+            K[S[0]] = arg
+        AB[S] = p.abs_bb(X, Y, K, np.array(S))
+        return saved
+
+    def revert(saved):
+        for i, x, y, k in saved:
+            X[i], Y[i], K[i] = x, y, k
+        idx = np.array([s[0] for s in saved])
+        AB[idx] = p.abs_bb(X, Y, K, idx)
+
+    # Estimate the starting temperature from random uphill moves.
+    ups = []
+    for _ in range(min(200, 20 * len(movable))):
+        kind, S, arg = propose(0.0)
+        before = p.local_cost(S, X, Y, K, AB, cfg.w_overlap)
+        saved = apply(kind, S, arg)
+        after = p.local_cost(S, X, Y, K, AB, cfg.w_overlap)
+        revert(saved)
+        if after > before:
+            ups.append(after - before)
+    T0 = (np.mean(ups) / -math.log(0.8)) if ups else 1.0
+    T_end = T0 * 1e-4
+
+    moves = accepted = 0
+    progress = 0.0
+    while True:
+        if moves % 256 == 0:
+            elapsed = time.monotonic() - t_start
+            progress = max(moves / total_moves, elapsed / cfg.time_limit_s)
+            if progress >= 1.0:
+                break
+        T = T0 * (T_end / T0) ** progress
+        w_ov = cfg.w_overlap * (1.0 + 30.0 * progress)
+        kind, S, arg = propose(progress)
+        before = p.local_cost(S, X, Y, K, AB, w_ov)
+        saved = apply(kind, S, arg)
+        after = p.local_cost(S, X, Y, K, AB, w_ov)
+        delta = after - before
+        moves += 1
+        if delta <= 0 or rng.random() < math.exp(-delta / max(T, 1e-12)):
+            accepted += 1
+        else:
+            revert(saved)
+
+    anneal_time = time.monotonic() - t_start
+    # Snap to the placement grid before legalization (whose offsets are grid multiples).
+    # Off-grid coordinates make Freerouting fail (NegativeArraySizeException in DrillPageArray).
+    g = cfg.grid_mm
+    X[movable] = np.round(X[movable] / g) * g
+    Y[movable] = np.round(Y[movable] / g) * g
+    failures = legalize(p, X, Y, K)
+    bd = p.evaluate(X, Y, K)
+    cost = bd["weighted_hpwl"] + 1000.0 * (len(bd["overlaps"]) + len(bd["outside"])) + \
+        sum(cfg.w_decap * max(0.0, d["distance_mm"] - d["limit_mm"]) ** 2 for d in bd["decaps"]) + \
+        sum(cfg.w_edge * max(0.0, e["distance_mm"] - e["limit_mm"]) ** 2 for e in bd["edges"])
+    stats = {"moves": moves, "accepted": accepted, "anneal_time_s": round(anneal_time, 2),
+             "time_s": round(time.monotonic() - t_start, 2), "T0": float(T0)}
+    return PlacementResult(seed, X.copy(), Y.copy(), K.copy(), float(cost), bd, stats, failures)
+
+
+def legalize(p: PlacementProblem, X, Y, K, step: float = 0.25, max_radius: float = 30.0) -> list[str]:
+    """Greedy overlap removal: keep each component at the nearest free spot."""
+    c = p.cfg.clearance_mm
+    order = list(np.where(p.locked)[0]) + sorted(p.movable.tolist(), key=lambda i: -p.area[i])
+    placed: list[int] = []
+    placed_bb = np.zeros((0, 4))
+    failures = []
+
+    # Candidate offsets on concentric square rings, sorted by distance.
+    rings = [(0.0, 0.0)]
+    r = step
+    while r <= max_radius:
+        n_side = int(round(2 * r / step))
+        for a in range(n_side):
+            s = -r + a * step
+            rings.extend([(s, -r), (r, s), (-s, r), (-r, -s)])
+        r += step
+    offs = np.array(rings)
+    offs = offs[np.argsort(np.hypot(offs[:, 0], offs[:, 1]), kind="stable")]
+
+    for i in order:
+        i = int(i)
+        base = p.bb[i, K[i]]
+        if p.locked[i]:
+            placed.append(i)
+            placed_bb = np.vstack([placed_bb, base + [X[i], Y[i], X[i], Y[i]]])
+            continue
+        rel = np.array([(p.side[j] == p.side[i]) or p.thru[j] or p.thru[i] for j in placed], dtype=bool)
+        others = placed_bb[rel] if len(placed) else placed_bb
+        chosen = None
+        for start in range(0, len(offs), 2048):
+            chunk = offs[start:start + 2048]
+            cx = X[i] + chunk[:, 0]
+            cy = Y[i] + chunk[:, 1]
+            cand = np.stack([cx + base[0], cy + base[1], cx + base[2], cy + base[3]], axis=-1)
+            if len(others):
+                ox = np.minimum(cand[:, None, 2] + c, others[None, :, 2]) - np.maximum(cand[:, None, 0] - c, others[None, :, 0])
+                oy = np.minimum(cand[:, None, 3] + c, others[None, :, 3]) - np.maximum(cand[:, None, 1] - c, others[None, :, 1])
+                free = ~((ox > 1e-9) & (oy > 1e-9)).any(axis=1)
+            else:
+                free = np.ones(len(cand), dtype=bool)
+            xs, ys = p._samples(cand)
+            inside = p.inside_points(xs.ravel(), ys.ravel()).reshape(xs.shape).all(axis=1)
+            ok = np.where(free & inside)[0]
+            if len(ok):
+                chosen = ok[0]
+                X[i], Y[i] = cx[chosen], cy[chosen]
+                break
+        if chosen is None:
+            failures.append(p.refs[i])
+        placed.append(i)
+        placed_bb = np.vstack([placed_bb, base + [X[i], Y[i], X[i], Y[i]]])
+    return failures
+
+
+_WORKER_PROBLEM: PlacementProblem | None = None
+
+
+def _init_worker(problem: PlacementProblem) -> None:
+    global _WORKER_PROBLEM
+    _WORKER_PROBLEM = problem
+
+
+def _run_seed(seed: int) -> PlacementResult:
+    assert _WORKER_PROBLEM is not None
+    return anneal(_WORKER_PROBLEM, seed)
+
+
+def place_candidates(ir: DesignIR, cfg: PlacementConfig, seeds: list[int],
+                     workers: int = 0) -> tuple[PlacementProblem, list[PlacementResult]]:
+    """Run one annealing per seed (in parallel) and return results sorted by cost.
+
+    Workers use the "spawn" start method: forking a process that has pcbnew loaded
+    corrupts SWIG state in the parent. This module never imports pcbnew.
+    """
+    problem = PlacementProblem(ir, cfg)
+    workers = workers or min(len(seeds), mp.cpu_count())
+    if workers > 1 and len(seeds) > 1:
+        ctx = mp.get_context("spawn")
+        with ctx.Pool(workers, initializer=_init_worker, initargs=(problem,)) as pool:
+            results = pool.map(_run_seed, seeds)
+    else:
+        results = [anneal(problem, s) for s in seeds]
+    results.sort(key=lambda r: r.cost)
+    return problem, results
+
+
+def apply_result(ir: DesignIR, problem: PlacementProblem, result: PlacementResult) -> None:
+    for i, c in enumerate(ir.components):
+        if c.locked:
+            continue
+        c.x = float(result.x[i])
+        c.y = float(result.y[i])
+        rot = (problem.base_rot[i] + 90.0 * int(result.k[i])) % 360.0
+        c.rotation = rot - 360.0 if rot > 180.0 else rot
+
+
+def current_metrics(ir: DesignIR, cfg: PlacementConfig | None = None) -> dict:
+    """Evaluate the placement already in the IR (e.g. the human-made original)."""
+    p = PlacementProblem(ir, cfg or PlacementConfig())
+    X = np.array([c.x for c in ir.components])
+    Y = np.array([c.y for c in ir.components])
+    K = np.zeros(p.n, dtype=int)
+    return p.evaluate(X, Y, K)
