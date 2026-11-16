@@ -37,7 +37,12 @@
         "P7",
         "P8"
       ],
-      "parts": 15
+      "parts": 15,
+      "density_pct": {
+        "front": 58.6,
+        "back": 58.6,
+        "board_area_mm2": 2418.0
+      }
     },
     "noah": {
       "input": "/usr/share/kicad/demos/ecc83/ecc83-pp.kicad_pcb",
@@ -56,12 +61,17 @@
       ],
       "timings": {
         "intake_s": 0.04,
-        "placement_s": 5.25,
-        "routing_s": 3.82,
-        "verification_s": 0.79,
-        "report_s": 0.2,
-        "export_s": 0.93,
-        "total_s": 11.14
+        "placement_s": 5.61,
+        "routing_s": 4.43,
+        "verification_s": 0.77,
+        "report_s": 0.22,
+        "export_s": 0.99,
+        "total_s": 12.2
+      },
+      "density_pct": {
+        "front": 58.6,
+        "back": 58.6,
+        "board_area_mm2": 2418.0
       },
       "placement": {
         "input": {
@@ -70,7 +80,7 @@
           "decap_total": 0
         },
         "best": {
-          "hpwl_mm": 280.4,
+          "hpwl_mm": 284.7,
           "overlaps": 0,
           "outside": 0,
           "decap_pass": 0,
@@ -80,52 +90,52 @@
         "candidates": [
           {
             "rank": 1,
-            "seed": 4,
-            "cost": 229.2,
-            "hpwl_mm": 280.4,
+            "seed": 2,
+            "cost": 243.7,
+            "hpwl_mm": 284.7,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
               "moves": 21248,
-              "accepted": 8854,
-              "anneal_time_s": 4.9,
-              "time_s": 4.94,
-              "T0": 9035.097212901166
+              "accepted": 8028,
+              "anneal_time_s": 5.01,
+              "time_s": 5.07,
+              "T0": 6147.479668501121
             },
             "file": "candidates/candidate_1.kicad_pcb"
           },
           {
             "rank": 2,
             "seed": 1,
-            "cost": 245.3,
-            "hpwl_mm": 287.9,
+            "cost": 246.5,
+            "hpwl_mm": 289.6,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
               "moves": 21248,
-              "accepted": 9387,
-              "anneal_time_s": 4.87,
-              "time_s": 4.91,
+              "accepted": 9109,
+              "anneal_time_s": 5.08,
+              "time_s": 5.13,
               "T0": 14177.362692990022
             },
             "file": "candidates/candidate_2.kicad_pcb"
           },
           {
             "rank": 3,
-            "seed": 2,
-            "cost": 262.0,
-            "hpwl_mm": 303.0,
+            "seed": 4,
+            "cost": 254.7,
+            "hpwl_mm": 298.8,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
               "moves": 21248,
-              "accepted": 7621,
-              "anneal_time_s": 4.97,
-              "time_s": 5.01,
-              "T0": 6147.479668501121
+              "accepted": 8464,
+              "anneal_time_s": 5.3,
+              "time_s": 5.33,
+              "T0": 9035.097212901166
             },
             "file": "candidates/candidate_3.kicad_pcb"
           }
@@ -133,45 +143,59 @@
       },
       "routing": {
         "ok": true,
-        "returncode": 0,
-        "timed_out": false,
-        "time_s": 3.78,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 3.65,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 0
+          }
+        ],
+        "time_s": 3.65,
         "reported_unrouted": 0,
         "reported_violations": 0,
-        "max_passes": 40,
-        "prepared": {
-          "pours_removed": 1,
-          "copper_graphics_keepouts": 0
-        },
-        "imported": true
+        "max_passes": 40
       },
       "route_stats": {
-        "track_length_mm": 275.9,
+        "track_length_mm": 210.1,
         "via_count": 0,
-        "segment_count": 62
+        "segment_count": 36
       },
       "drc": {
         "ok": true,
         "parity_checked": true,
         "unconnected": 0,
-        "violations_total": 24,
+        "violations_total": 37,
         "by_category": {
-          "cosmetic": 3,
+          "cosmetic": 16,
           "environment": 15,
           "parity": 6
         },
         "errors_by_category": {
-          "cosmetic": 1
+          "cosmetic": 14
         },
         "by_type": {
           "lib_footprint_issues": 15,
+          "silk_overlap": 13,
           "footprint_symbol_mismatch": 6,
           "silk_edge_clearance": 2,
           "silk_over_copper": 1
         }
       },
       "claims": {
-        "verified": 7,
+        "verified": 8,
         "rejected": 0
       },
       "fabrication": {
@@ -204,9 +228,124 @@
         "archive": "fabrication.zip"
       }
     },
+    "control": {
+      "input": "/usr/share/kicad/demos/ecc83/ecc83-pp.kicad_pcb",
+      "parts": 15,
+      "nets": 13,
+      "layers": 2,
+      "locked": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6",
+        "P7",
+        "P8"
+      ],
+      "timings": {
+        "intake_s": 0.03,
+        "placement_s": 0.0,
+        "routing_s": 4.49,
+        "verification_s": 0.75,
+        "report_s": 0.17,
+        "total_s": 5.51
+      },
+      "density_pct": {
+        "front": 58.6,
+        "back": 58.6,
+        "board_area_mm2": 2418.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 243.0,
+          "decap_pass": 0,
+          "decap_total": 0
+        },
+        "best": {
+          "hpwl_mm": 243.0,
+          "overlaps": 1,
+          "outside": 0,
+          "decap_pass": 0,
+          "decap_total": 0,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 0,
+            "cost": 0.0,
+            "hpwl_mm": 243.0,
+            "overlaps": 1,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 0,
+              "accepted": 0,
+              "time_s": 0.0
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 3.69,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 0
+          }
+        ],
+        "time_s": 3.69,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 161.8,
+        "via_count": 0,
+        "segment_count": 33
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 23,
+        "by_category": {
+          "environment": 15,
+          "cosmetic": 2,
+          "parity": 6
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 15,
+          "footprint_symbol_mismatch": 6,
+          "silk_edge_clearance": 2
+        }
+      },
+      "claims": {
+        "verified": 8,
+        "rejected": 0
+      },
+      "fabrication": null
+    },
     "error": null,
     "place_time_per_seed_s": 11.0,
-    "wall_s": 12.1
+    "wall_s": 18.7
   },
   {
     "board": "sonde_xilinx",
@@ -239,7 +378,12 @@
         "J2",
         "P1"
       ],
-      "parts": 25
+      "parts": 25,
+      "density_pct": {
+        "front": 62.3,
+        "back": 50.5,
+        "board_area_mm2": 3501.8
+      }
     },
     "noah": {
       "input": "/usr/share/kicad/demos/sonde xilinx/sonde xilinx.kicad_pcb",
@@ -252,13 +396,18 @@
         "P1"
       ],
       "timings": {
-        "intake_s": 0.05,
-        "placement_s": 15.54,
-        "routing_s": 8.47,
-        "verification_s": 0.92,
-        "report_s": 0.19,
-        "export_s": 1.14,
-        "total_s": 26.54
+        "intake_s": 0.06,
+        "placement_s": 15.36,
+        "routing_s": 17.09,
+        "verification_s": 1.0,
+        "report_s": 0.17,
+        "export_s": 1.17,
+        "total_s": 35.09
+      },
+      "density_pct": {
+        "front": 62.3,
+        "back": 50.5,
+        "board_area_mm2": 3501.8
       },
       "placement": {
         "input": {
@@ -267,7 +416,7 @@
           "decap_total": 1
         },
         "best": {
-          "hpwl_mm": 755.5,
+          "hpwl_mm": 711.9,
           "overlaps": 0,
           "outside": 0,
           "decap_pass": 0,
@@ -277,32 +426,32 @@
         "candidates": [
           {
             "rank": 1,
-            "seed": 1,
-            "cost": 662.0,
-            "hpwl_mm": 755.5,
+            "seed": 3,
+            "cost": 619.1,
+            "hpwl_mm": 711.9,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
-              "moves": 40960,
-              "accepted": 10567,
-              "anneal_time_s": 15.03,
+              "moves": 56576,
+              "accepted": 18831,
+              "anneal_time_s": 15.06,
               "time_s": 15.11,
-              "T0": 6819.775648081642
+              "T0": 9183.121933875296
             },
             "file": "candidates/candidate_1.kicad_pcb"
           },
           {
             "rank": 2,
             "seed": 4,
-            "cost": 707.9,
-            "hpwl_mm": 800.4,
+            "cost": 682.4,
+            "hpwl_mm": 768.8,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
-              "moves": 39680,
-              "accepted": 11148,
+              "moves": 54016,
+              "accepted": 15338,
               "anneal_time_s": 15.05,
               "time_s": 15.1,
               "T0": 7089.46571738518
@@ -311,18 +460,18 @@
           },
           {
             "rank": 3,
-            "seed": 3,
-            "cost": 722.4,
-            "hpwl_mm": 814.0,
+            "seed": 1,
+            "cost": 683.7,
+            "hpwl_mm": 779.2,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
-              "moves": 41472,
-              "accepted": 11968,
-              "anneal_time_s": 15.08,
-              "time_s": 15.13,
-              "T0": 9183.121933875296
+              "moves": 64000,
+              "accepted": 18712,
+              "anneal_time_s": 15.05,
+              "time_s": 15.12,
+              "T0": 6819.775648081642
             },
             "file": "candidates/candidate_3.kicad_pcb"
           }
@@ -330,46 +479,75 @@
       },
       "routing": {
         "ok": true,
-        "returncode": 0,
-        "timed_out": false,
-        "time_s": 8.42,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 11.2,
+            "reported_unrouted": 1,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 8,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 3
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 4.94,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 1,
+              "copper_graphics_keepouts": 8,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 16.14,
         "reported_unrouted": 0,
         "reported_violations": 0,
-        "max_passes": 40,
-        "prepared": {
-          "pours_removed": 1,
-          "copper_graphics_keepouts": 8
-        },
-        "imported": true
+        "max_passes": 40
       },
       "route_stats": {
-        "track_length_mm": 962.5,
-        "via_count": 8,
-        "segment_count": 274
+        "track_length_mm": 945.2,
+        "via_count": 9,
+        "segment_count": 269
       },
       "drc": {
         "ok": true,
         "parity_checked": true,
         "unconnected": 0,
-        "violations_total": 61,
+        "violations_total": 56,
         "by_category": {
-          "cosmetic": 11,
+          "cosmetic": 6,
           "environment": 25,
           "parity": 25
         },
         "errors_by_category": {
-          "cosmetic": 10
+          "cosmetic": 6
         },
         "by_type": {
           "lib_footprint_issues": 25,
           "footprint_symbol_mismatch": 25,
-          "silk_overlap": 6,
-          "silk_over_copper": 4,
-          "silk_edge_clearance": 1
+          "silk_overlap": 5,
+          "silk_over_copper": 1
         }
       },
       "claims": {
-        "verified": 9,
+        "verified": 10,
         "rejected": 0
       },
       "fabrication": {
@@ -402,9 +580,134 @@
         "archive": "fabrication.zip"
       }
     },
+    "control": {
+      "input": "/usr/share/kicad/demos/sonde xilinx/sonde xilinx.kicad_pcb",
+      "parts": 25,
+      "nets": 42,
+      "layers": 2,
+      "locked": [
+        "J1",
+        "J2",
+        "P1"
+      ],
+      "timings": {
+        "intake_s": 0.06,
+        "placement_s": 0.0,
+        "routing_s": 32.31,
+        "verification_s": 0.9,
+        "report_s": 0.21,
+        "total_s": 33.63
+      },
+      "density_pct": {
+        "front": 62.3,
+        "back": 50.5,
+        "board_area_mm2": 3501.8
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 609.2,
+          "decap_pass": 0,
+          "decap_total": 1
+        },
+        "best": {
+          "hpwl_mm": 609.2,
+          "overlaps": 8,
+          "outside": 0,
+          "decap_pass": 0,
+          "decap_total": 1,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 0,
+            "cost": 0.0,
+            "hpwl_mm": 609.2,
+            "overlaps": 8,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 0,
+              "accepted": 0,
+              "time_s": 0.0
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 26.76,
+            "reported_unrouted": 1,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 8,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 1
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 4.45,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 1,
+              "copper_graphics_keepouts": 8,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 31.21,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 782.6,
+        "via_count": 2,
+        "segment_count": 229
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 50,
+        "by_category": {
+          "environment": 25,
+          "parity": 25
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 25,
+          "footprint_symbol_mismatch": 25
+        }
+      },
+      "claims": {
+        "verified": 10,
+        "rejected": 0
+      },
+      "fabrication": null
+    },
     "error": null,
     "place_time_per_seed_s": 15.0,
-    "wall_s": 27.5
+    "wall_s": 69.7
   },
   {
     "board": "interf_u",
@@ -440,7 +743,12 @@
         "BUS1",
         "P1"
       ],
-      "parts": 25
+      "parts": 25,
+      "density_pct": {
+        "front": 49.1,
+        "back": 43.0,
+        "board_area_mm2": 12208.8
+      }
     },
     "noah": {
       "input": "/usr/share/kicad/demos/interf_u/interf_u.kicad_pcb",
@@ -452,13 +760,18 @@
         "P1"
       ],
       "timings": {
-        "intake_s": 0.13,
-        "placement_s": 15.68,
-        "routing_s": 70.07,
-        "verification_s": 1.2,
-        "report_s": 0.17,
-        "export_s": 1.29,
-        "total_s": 89.14
+        "intake_s": 0.12,
+        "placement_s": 15.77,
+        "routing_s": 770.16,
+        "verification_s": 1.27,
+        "report_s": 0.19,
+        "export_s": 1.17,
+        "total_s": 789.32
+      },
+      "density_pct": {
+        "front": 49.1,
+        "back": 43.0,
+        "board_area_mm2": 12208.8
       },
       "placement": {
         "input": {
@@ -467,108 +780,142 @@
           "decap_total": 4
         },
         "best": {
-          "hpwl_mm": 4382.6,
+          "hpwl_mm": 4495.4,
           "overlaps": 0,
           "outside": 0,
-          "decap_pass": 3,
+          "decap_pass": 2,
           "decap_total": 4,
           "legalization_failures": []
         },
         "candidates": [
           {
             "rank": 1,
-            "seed": 4,
-            "cost": 4124.7,
-            "hpwl_mm": 4382.6,
+            "seed": 2,
+            "cost": 4278.3,
+            "hpwl_mm": 4495.4,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
-              "moves": 38656,
-              "accepted": 14969,
-              "anneal_time_s": 15.08,
-              "time_s": 15.13,
-              "T0": 16016.867488442029
+              "moves": 37888,
+              "accepted": 16251,
+              "anneal_time_s": 15.09,
+              "time_s": 15.14,
+              "T0": 24566.484089795515
             },
             "file": "candidates/candidate_1.kicad_pcb"
           },
           {
             "rank": 2,
             "seed": 1,
-            "cost": 4281.1,
-            "hpwl_mm": 4532.1,
+            "cost": 5316.2,
+            "hpwl_mm": 5549.4,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
               "moves": 37376,
-              "accepted": 15631,
+              "accepted": 15657,
               "anneal_time_s": 15.0,
-              "time_s": 15.05,
+              "time_s": 15.06,
               "T0": 21537.139962862584
             },
             "file": "candidates/candidate_2.kicad_pcb"
           },
           {
             "rank": 3,
-            "seed": 2,
-            "cost": 4630.3,
-            "hpwl_mm": 4867.2,
+            "seed": 3,
+            "cost": 5422.6,
+            "hpwl_mm": 5644.1,
             "overlaps": 0,
             "outside": 0,
             "legalization_failures": [],
             "stats": {
-              "moves": 35840,
-              "accepted": 15369,
-              "anneal_time_s": 15.02,
-              "time_s": 15.08,
-              "T0": 24566.484089795515
+              "moves": 41216,
+              "accepted": 16963,
+              "anneal_time_s": 15.04,
+              "time_s": 15.1,
+              "T0": 25116.8026237149
             },
             "file": "candidates/candidate_3.kicad_pcb"
           }
         ]
       },
       "routing": {
-        "ok": true,
-        "returncode": 0,
-        "timed_out": false,
-        "time_s": 69.95,
-        "reported_unrouted": 0,
+        "ok": false,
+        "stages": [
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 384.11,
+            "reported_unrouted": 16,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 6,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 15
+          },
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 384.45,
+            "reported_unrouted": 5,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 1,
+              "copper_graphics_keepouts": 6,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 768.56,
+        "reported_unrouted": 5,
         "reported_violations": 0,
-        "max_passes": 40,
-        "prepared": {
-          "pours_removed": 1,
-          "copper_graphics_keepouts": 6
-        },
-        "imported": true
+        "max_passes": 40
       },
       "route_stats": {
-        "track_length_mm": 5324.2,
-        "via_count": 67,
-        "segment_count": 1361
+        "track_length_mm": 5702.5,
+        "via_count": 91,
+        "segment_count": 1509
       },
       "drc": {
         "ok": true,
         "parity_checked": true,
-        "unconnected": 0,
-        "violations_total": 70,
+        "unconnected": 5,
+        "violations_total": 62,
         "by_category": {
-          "cosmetic": 23,
+          "cosmetic": 8,
+          "electrical": 7,
           "environment": 25,
           "parity": 22
         },
         "errors_by_category": {
-          "cosmetic": 23
+          "cosmetic": 8,
+          "electrical": 6
         },
         "by_type": {
           "lib_footprint_issues": 25,
           "footprint_symbol_mismatch": 22,
-          "silk_overlap": 13,
-          "silk_over_copper": 10
+          "silk_overlap": 7,
+          "starved_thermal": 6,
+          "silk_over_copper": 1,
+          "track_dangling": 1
         }
       },
       "claims": {
-        "verified": 12,
+        "verified": 13,
         "rejected": 0
       },
       "fabrication": {
@@ -601,8 +948,2309 @@
         "archive": "fabrication.zip"
       }
     },
+    "control": {
+      "input": "/usr/share/kicad/demos/interf_u/interf_u.kicad_pcb",
+      "parts": 25,
+      "nets": 173,
+      "layers": 2,
+      "locked": [
+        "BUS1",
+        "P1"
+      ],
+      "timings": {
+        "intake_s": 0.12,
+        "placement_s": 0.01,
+        "routing_s": 289.81,
+        "verification_s": 1.63,
+        "report_s": 0.21,
+        "total_s": 292.11
+      },
+      "density_pct": {
+        "front": 49.1,
+        "back": 43.0,
+        "board_area_mm2": 12208.8
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 4369.0,
+          "decap_pass": 0,
+          "decap_total": 4
+        },
+        "best": {
+          "hpwl_mm": 4369.0,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 0,
+          "decap_total": 4,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 0,
+            "cost": 0.0,
+            "hpwl_mm": 4369.0,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 0,
+              "accepted": 0,
+              "time_s": 0.0
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 279.06,
+            "reported_unrouted": 1,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 6,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 3
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 9.26,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 1,
+              "copper_graphics_keepouts": 6,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 288.32,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 4947.4,
+        "via_count": 45,
+        "segment_count": 1005
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 50,
+        "by_category": {
+          "electrical": 3,
+          "environment": 25,
+          "parity": 22
+        },
+        "errors_by_category": {
+          "electrical": 3
+        },
+        "by_type": {
+          "lib_footprint_issues": 25,
+          "footprint_symbol_mismatch": 22,
+          "starved_thermal": 3
+        }
+      },
+      "claims": {
+        "verified": 13,
+        "rejected": 0
+      },
+      "fabrication": null
+    },
     "error": null,
     "place_time_per_seed_s": 15.0,
-    "wall_s": 90.5
+    "wall_s": 1082.9
+  },
+  {
+    "board": "pic_programmer",
+    "baseline": {
+      "hpwl_mm": 1489.2,
+      "decap_pass": 0,
+      "decap_total": 3,
+      "route_stats": {
+        "track_length_mm": 1745.7,
+        "via_count": 6,
+        "segment_count": 370
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 63,
+        "by_category": {
+          "environment": 63
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 63
+        }
+      },
+      "lock": [
+        "J1",
+        "P1",
+        "P101",
+        "P102",
+        "P103",
+        "P104",
+        "P105",
+        "P106",
+        "P2",
+        "P3"
+      ],
+      "parts": 63,
+      "density_pct": {
+        "front": 48.7,
+        "back": 48.7,
+        "board_area_mm2": 15840.0
+      }
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/pic_programmer/pic_programmer.kicad_pcb",
+      "parts": 63,
+      "nets": 111,
+      "layers": 2,
+      "locked": [
+        "J1",
+        "P1",
+        "P101",
+        "P102",
+        "P103",
+        "P104",
+        "P105",
+        "P106",
+        "P2",
+        "P3"
+      ],
+      "timings": {
+        "intake_s": 0.16,
+        "placement_s": 30.94,
+        "routing_s": 45.69,
+        "verification_s": 1.37,
+        "report_s": 0.24,
+        "export_s": 1.13,
+        "total_s": 80.07
+      },
+      "density_pct": {
+        "front": 48.7,
+        "back": 48.7,
+        "board_area_mm2": 15840.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 1489.2,
+          "decap_pass": 0,
+          "decap_total": 3
+        },
+        "best": {
+          "hpwl_mm": 1787.6,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 1,
+          "decap_total": 3,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 2,
+            "cost": 1592.6,
+            "hpwl_mm": 1787.6,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 112896,
+              "accepted": 32617,
+              "anneal_time_s": 30.27,
+              "time_s": 30.4,
+              "T0": 5755.884962758047
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 3,
+            "cost": 1594.3,
+            "hpwl_mm": 1780.9,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 113920,
+              "accepted": 37964,
+              "anneal_time_s": 30.24,
+              "time_s": 30.37,
+              "T0": 9588.633873061952
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 1,
+            "cost": 1666.7,
+            "hpwl_mm": 1867.8,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 113408,
+              "accepted": 40467,
+              "anneal_time_s": 30.24,
+              "time_s": 30.37,
+              "T0": 9801.694693959087
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 44.31,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 19,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 0
+          }
+        ],
+        "time_s": 44.31,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 1967.3,
+        "via_count": 7,
+        "segment_count": 343
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 88,
+        "by_category": {
+          "cosmetic": 25,
+          "environment": 63
+        },
+        "errors_by_category": {
+          "cosmetic": 25
+        },
+        "by_type": {
+          "lib_footprint_issues": 63,
+          "silk_overlap": 20,
+          "silk_over_copper": 5
+        }
+      },
+      "claims": {
+        "verified": 12,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "pic_programmer-B_Adhesive.gba",
+          "pic_programmer-B_Courtyard.gbr",
+          "pic_programmer-B_Fab.gbr",
+          "pic_programmer-B_Mask.gbs",
+          "pic_programmer-B_Paste.gbp",
+          "pic_programmer-B_Silkscreen.gbo",
+          "pic_programmer-Edge_Cuts.gm1",
+          "pic_programmer-F_Adhesive.gta",
+          "pic_programmer-F_Courtyard.gbr",
+          "pic_programmer-F_Fab.gbr",
+          "pic_programmer-F_Mask.gts",
+          "pic_programmer-F_Paste.gtp",
+          "pic_programmer-F_Silkscreen.gto",
+          "pic_programmer-Margin.gbr",
+          "pic_programmer-User_Comments.gbr",
+          "pic_programmer-User_Drawings.gbr",
+          "pic_programmer-User_Eco1.gbr",
+          "pic_programmer-User_Eco2.gbr",
+          "pic_programmer-bottom_layer.gbl",
+          "pic_programmer-job.gbrjob",
+          "pic_programmer-top_layer.gtl",
+          "pic_programmer.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "control": {
+      "input": "/usr/share/kicad/demos/pic_programmer/pic_programmer.kicad_pcb",
+      "parts": 63,
+      "nets": 111,
+      "layers": 2,
+      "locked": [
+        "J1",
+        "P1",
+        "P101",
+        "P102",
+        "P103",
+        "P104",
+        "P105",
+        "P106",
+        "P2",
+        "P3"
+      ],
+      "timings": {
+        "intake_s": 0.22,
+        "placement_s": 0.01,
+        "routing_s": 41.0,
+        "verification_s": 1.35,
+        "report_s": 0.18,
+        "total_s": 43.03
+      },
+      "density_pct": {
+        "front": 48.7,
+        "back": 48.7,
+        "board_area_mm2": 15840.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 1489.2,
+          "decap_pass": 0,
+          "decap_total": 3
+        },
+        "best": {
+          "hpwl_mm": 1489.2,
+          "overlaps": 2,
+          "outside": 0,
+          "decap_pass": 0,
+          "decap_total": 3,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 0,
+            "cost": 0.0,
+            "hpwl_mm": 1489.2,
+            "overlaps": 2,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 0,
+              "accepted": 0,
+              "time_s": 0.0
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 34.75,
+            "reported_unrouted": 1,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 19,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 1
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 4.75,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 1,
+              "copper_graphics_keepouts": 19,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 39.5,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 2080.5,
+        "via_count": 3,
+        "segment_count": 361
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 63,
+        "by_category": {
+          "environment": 63
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 63
+        }
+      },
+      "claims": {
+        "verified": 12,
+        "rejected": 0
+      },
+      "fabrication": null
+    },
+    "error": null,
+    "place_time_per_seed_s": 30.200000000000003,
+    "wall_s": 124.7
+  },
+  {
+    "board": "complex_hierarchy",
+    "baseline": {
+      "hpwl_mm": 1237.3,
+      "decap_pass": 2,
+      "decap_total": 2,
+      "route_stats": {
+        "track_length_mm": 1264.7,
+        "via_count": 0,
+        "segment_count": 365
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 73,
+        "by_category": {
+          "cosmetic": 5,
+          "environment": 68
+        },
+        "errors_by_category": {
+          "cosmetic": 1
+        },
+        "by_type": {
+          "lib_footprint_issues": 68,
+          "silk_edge_clearance": 4,
+          "silk_overlap": 1
+        }
+      },
+      "lock": [
+        "P101",
+        "P102",
+        "P201",
+        "P202",
+        "P301",
+        "P302"
+      ],
+      "parts": 68,
+      "density_pct": {
+        "front": 37.8,
+        "back": 37.8,
+        "board_area_mm2": 8080.0
+      }
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/complex_hierarchy/complex_hierarchy.kicad_pcb",
+      "parts": 68,
+      "nets": 53,
+      "layers": 2,
+      "locked": [
+        "P101",
+        "P102",
+        "P201",
+        "P202",
+        "P301",
+        "P302"
+      ],
+      "timings": {
+        "intake_s": 0.14,
+        "placement_s": 32.88,
+        "routing_s": 120.15,
+        "verification_s": 1.48,
+        "report_s": 0.17,
+        "export_s": 1.09,
+        "total_s": 156.54
+      },
+      "density_pct": {
+        "front": 37.8,
+        "back": 37.8,
+        "board_area_mm2": 8080.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 1237.3,
+          "decap_pass": 2,
+          "decap_total": 2
+        },
+        "best": {
+          "hpwl_mm": 1156.7,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 2,
+          "decap_total": 2,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 4,
+            "cost": 1020.2,
+            "hpwl_mm": 1156.7,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 133888,
+              "accepted": 42515,
+              "anneal_time_s": 32.21,
+              "time_s": 32.34,
+              "T0": 4425.065832502923
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 3,
+            "cost": 1038.2,
+            "hpwl_mm": 1176.0,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 129280,
+              "accepted": 43026,
+              "anneal_time_s": 32.22,
+              "time_s": 32.34,
+              "T0": 4337.0204248941245
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 2,
+            "cost": 1097.1,
+            "hpwl_mm": 1221.0,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 122880,
+              "accepted": 40263,
+              "anneal_time_s": 32.25,
+              "time_s": 32.38,
+              "T0": 5030.4243705258805
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 111.04,
+            "reported_unrouted": 173,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 2,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 25
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 7.27,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 133,
+              "copper_graphics_keepouts": 2,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 118.31,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 1671.7,
+        "via_count": 0,
+        "segment_count": 379
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 145,
+        "by_category": {
+          "cosmetic": 69,
+          "electrical": 8,
+          "environment": 68
+        },
+        "errors_by_category": {
+          "cosmetic": 65,
+          "electrical": 1
+        },
+        "by_type": {
+          "lib_footprint_issues": 68,
+          "silk_overlap": 41,
+          "silk_over_copper": 24,
+          "track_dangling": 7,
+          "silk_edge_clearance": 4,
+          "starved_thermal": 1
+        }
+      },
+      "claims": {
+        "verified": 11,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "complex_hierarchy-B_Adhesive.gba",
+          "complex_hierarchy-B_Courtyard.gbr",
+          "complex_hierarchy-B_Fab.gbr",
+          "complex_hierarchy-B_Mask.gbs",
+          "complex_hierarchy-B_Paste.gbp",
+          "complex_hierarchy-B_Silkscreen.gbo",
+          "complex_hierarchy-Edge_Cuts.gm1",
+          "complex_hierarchy-F_Adhesive.gta",
+          "complex_hierarchy-F_Courtyard.gbr",
+          "complex_hierarchy-F_Fab.gbr",
+          "complex_hierarchy-F_Mask.gts",
+          "complex_hierarchy-F_Paste.gtp",
+          "complex_hierarchy-F_Silkscreen.gto",
+          "complex_hierarchy-Margin.gbr",
+          "complex_hierarchy-User_Comments.gbr",
+          "complex_hierarchy-User_Drawings.gbr",
+          "complex_hierarchy-User_Eco1.gbr",
+          "complex_hierarchy-User_Eco2.gbr",
+          "complex_hierarchy-bottom_copper.gbl",
+          "complex_hierarchy-job.gbrjob",
+          "complex_hierarchy-top_copper.gtl",
+          "complex_hierarchy.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "control": {
+      "input": "/usr/share/kicad/demos/complex_hierarchy/complex_hierarchy.kicad_pcb",
+      "parts": 68,
+      "nets": 53,
+      "layers": 2,
+      "locked": [
+        "P101",
+        "P102",
+        "P201",
+        "P202",
+        "P301",
+        "P302"
+      ],
+      "timings": {
+        "intake_s": 0.17,
+        "placement_s": 0.01,
+        "routing_s": 9.8,
+        "verification_s": 1.42,
+        "report_s": 0.16,
+        "total_s": 11.86
+      },
+      "density_pct": {
+        "front": 37.8,
+        "back": 37.8,
+        "board_area_mm2": 8080.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 1237.3,
+          "decap_pass": 2,
+          "decap_total": 2
+        },
+        "best": {
+          "hpwl_mm": 1237.3,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 2,
+          "decap_total": 2,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 0,
+            "cost": 0.0,
+            "hpwl_mm": 1237.3,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 0,
+              "accepted": 0,
+              "time_s": 0.0
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 3.89,
+            "reported_unrouted": 89,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 2,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 86
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 4.39,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 10,
+              "copper_graphics_keepouts": 2,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 8.28,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 1377.3,
+        "via_count": 0,
+        "segment_count": 308
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 73,
+        "by_category": {
+          "cosmetic": 5,
+          "environment": 68
+        },
+        "errors_by_category": {
+          "cosmetic": 1
+        },
+        "by_type": {
+          "lib_footprint_issues": 68,
+          "silk_edge_clearance": 4,
+          "silk_overlap": 1
+        }
+      },
+      "claims": {
+        "verified": 11,
+        "rejected": 0
+      },
+      "fabrication": null
+    },
+    "error": null,
+    "place_time_per_seed_s": 32.2,
+    "wall_s": 170.2
+  },
+  {
+    "board": "stickhub",
+    "baseline": {
+      "hpwl_mm": 478.1,
+      "decap_pass": 13,
+      "decap_total": 29,
+      "route_stats": {
+        "track_length_mm": 742.7,
+        "via_count": 87,
+        "segment_count": 1293
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 94,
+        "by_category": {
+          "environment": 94
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 94
+        }
+      },
+      "lock": [
+        "H1",
+        "J1",
+        "J2",
+        "J3",
+        "J4",
+        "J5",
+        "J6",
+        "J7",
+        "J8",
+        "J9"
+      ],
+      "parts": 94,
+      "density_pct": {
+        "front": 96.2,
+        "back": 191.4,
+        "board_area_mm2": 609.0
+      }
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/stickhub/StickHub.kicad_pcb",
+      "parts": 94,
+      "nets": 47,
+      "layers": 2,
+      "locked": [
+        "H1",
+        "J1",
+        "J2",
+        "J3",
+        "J4",
+        "J5",
+        "J6",
+        "J7",
+        "J8",
+        "J9"
+      ],
+      "timings": {
+        "intake_s": 0.09,
+        "placement_s": 45.14,
+        "routing_s": 770.34,
+        "verification_s": 1.4,
+        "report_s": 0.19,
+        "export_s": 1.08,
+        "total_s": 818.97
+      },
+      "density_pct": {
+        "front": 96.2,
+        "back": 191.4,
+        "board_area_mm2": 609.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 478.1,
+          "decap_pass": 13,
+          "decap_total": 29
+        },
+        "best": {
+          "hpwl_mm": 937.9,
+          "overlaps": 75,
+          "outside": 22,
+          "decap_pass": 11,
+          "decap_total": 29,
+          "legalization_failures": [
+            "U1",
+            "U2",
+            "C38",
+            "C37",
+            "C24",
+            "C23",
+            "C36",
+            "C34",
+            "C35",
+            "C27",
+            "C26",
+            "C25",
+            "C22",
+            "R13",
+            "R4",
+            "R1",
+            "R10",
+            "R7",
+            "C2",
+            "C11",
+            "R12",
+            "R2",
+            "R5",
+            "R3",
+            "R9",
+            "C10",
+            "C8",
+            "C6",
+            "C4",
+            "C5",
+            "C13",
+            "C3",
+            "R11",
+            "R6",
+            "JP1",
+            "C21",
+            "C17",
+            "D15",
+            "D20",
+            "D21",
+            "D17",
+            "D18",
+            "C32",
+            "C29",
+            "C33",
+            "C30",
+            "D8",
+            "D9",
+            "D1",
+            "D5",
+            "D3",
+            "D6",
+            "D7",
+            "D14",
+            "D11",
+            "D2",
+            "D12",
+            "D13",
+            "D23",
+            "D24",
+            "D22",
+            "C28",
+            "C12",
+            "LOGO1",
+            "LOGO2",
+            "LOGO3",
+            "LOGO4"
+          ]
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 2,
+            "cost": 98353.8,
+            "hpwl_mm": 937.9,
+            "overlaps": 75,
+            "outside": 22,
+            "legalization_failures": [
+              "U1",
+              "U2",
+              "C38",
+              "C37",
+              "C24",
+              "C23",
+              "C36",
+              "C34",
+              "C35",
+              "C27",
+              "C26",
+              "C25",
+              "C22",
+              "R13",
+              "R4",
+              "R1",
+              "R10",
+              "R7",
+              "C2",
+              "C11",
+              "R12",
+              "R2",
+              "R5",
+              "R3",
+              "R9",
+              "C10",
+              "C8",
+              "C6",
+              "C4",
+              "C5",
+              "C13",
+              "C3",
+              "R11",
+              "R6",
+              "JP1",
+              "C21",
+              "C17",
+              "D15",
+              "D20",
+              "D21",
+              "D17",
+              "D18",
+              "C32",
+              "C29",
+              "C33",
+              "C30",
+              "D8",
+              "D9",
+              "D1",
+              "D5",
+              "D3",
+              "D6",
+              "D7",
+              "D14",
+              "D11",
+              "D2",
+              "D12",
+              "D13",
+              "D23",
+              "D24",
+              "D22",
+              "C28",
+              "C12",
+              "LOGO1",
+              "LOGO2",
+              "LOGO3",
+              "LOGO4"
+            ],
+            "stats": {
+              "moves": 162560,
+              "accepted": 53828,
+              "anneal_time_s": 42.61,
+              "time_s": 44.54,
+              "T0": 1283.4604600847842
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 1,
+            "cost": 102484.5,
+            "hpwl_mm": 997.0,
+            "overlaps": 69,
+            "outside": 32,
+            "legalization_failures": [
+              "U1",
+              "U2",
+              "C38",
+              "C37",
+              "C24",
+              "C23",
+              "C36",
+              "C34",
+              "C35",
+              "C27",
+              "C26",
+              "C25",
+              "C22",
+              "C9",
+              "R13",
+              "C7",
+              "C1",
+              "R4",
+              "R1",
+              "R10",
+              "C2",
+              "C11",
+              "R12",
+              "R2",
+              "R5",
+              "R3",
+              "R9",
+              "C10",
+              "C8",
+              "C6",
+              "C4",
+              "C5",
+              "C13",
+              "C3",
+              "R11",
+              "R6",
+              "JP1",
+              "C21",
+              "D16",
+              "D19",
+              "D20",
+              "D21",
+              "D17",
+              "D18",
+              "C32",
+              "C29",
+              "C31",
+              "C33",
+              "C30",
+              "D10",
+              "D8",
+              "D9",
+              "D1",
+              "D3",
+              "D7",
+              "D14",
+              "D11",
+              "D2",
+              "D12",
+              "D13",
+              "D24",
+              "D22",
+              "C28",
+              "C12",
+              "LOGO1",
+              "LOGO2",
+              "LOGO3",
+              "LOGO4"
+            ],
+            "stats": {
+              "moves": 157952,
+              "accepted": 56652,
+              "anneal_time_s": 42.68,
+              "time_s": 44.54,
+              "T0": 1745.8073336208906
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 3,
+            "cost": 116017.7,
+            "hpwl_mm": 937.7,
+            "overlaps": 92,
+            "outside": 21,
+            "legalization_failures": [
+              "U1",
+              "U2",
+              "C38",
+              "C37",
+              "C23",
+              "C36",
+              "C34",
+              "C35",
+              "C26",
+              "C25",
+              "C22",
+              "R8",
+              "C9",
+              "R13",
+              "C7",
+              "C1",
+              "R4",
+              "R1",
+              "R10",
+              "R7",
+              "C2",
+              "C11",
+              "R12",
+              "R2",
+              "R5",
+              "R3",
+              "R9",
+              "C10",
+              "C8",
+              "C6",
+              "C4",
+              "C5",
+              "C13",
+              "C3",
+              "R11",
+              "R6",
+              "JP1",
+              "C21",
+              "D19",
+              "D20",
+              "D21",
+              "D17",
+              "D18",
+              "C33",
+              "C30",
+              "D4",
+              "D10",
+              "D8",
+              "D9",
+              "D1",
+              "D5",
+              "D3",
+              "D6",
+              "D7",
+              "D14",
+              "D11",
+              "D2",
+              "D12",
+              "D13",
+              "D23",
+              "D24",
+              "C28",
+              "C12",
+              "LOGO2",
+              "LOGO3",
+              "LOGO4"
+            ],
+            "stats": {
+              "moves": 162560,
+              "accepted": 60513,
+              "anneal_time_s": 42.66,
+              "time_s": 44.57,
+              "T0": 2015.1351574779778
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": false,
+        "stages": [
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 384.44,
+            "reported_unrouted": 49,
+            "reported_violations": 71,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 63
+          },
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 384.51,
+            "reported_unrouted": 54,
+            "reported_violations": 75,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 5,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 768.95,
+        "reported_unrouted": 54,
+        "reported_violations": 75,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 1292.6,
+        "via_count": 138,
+        "segment_count": 986
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 43,
+        "violations_total": 428,
+        "by_category": {
+          "manufacturing": 103,
+          "electrical": 186,
+          "environment": 94,
+          "cosmetic": 45
+        },
+        "errors_by_category": {
+          "manufacturing": 103,
+          "electrical": 157
+        },
+        "by_type": {
+          "copper_edge_clearance": 120,
+          "solder_mask_bridge": 103,
+          "lib_footprint_issues": 94,
+          "silk_edge_clearance": 45,
+          "shorting_items": 28,
+          "via_dangling": 16,
+          "track_dangling": 12,
+          "clearance": 9,
+          "isolated_copper": 1
+        }
+      },
+      "claims": {
+        "verified": 24,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "StickHub-B_Adhesive.gba",
+          "StickHub-B_Courtyard.gbr",
+          "StickHub-B_Cu.gbl",
+          "StickHub-B_Fab.gbr",
+          "StickHub-B_Mask.gbs",
+          "StickHub-B_Paste.gbp",
+          "StickHub-B_Silkscreen.gbo",
+          "StickHub-Edge_Cuts.gm1",
+          "StickHub-F_Adhesive.gta",
+          "StickHub-F_Courtyard.gbr",
+          "StickHub-F_Cu.gtl",
+          "StickHub-F_Fab.gbr",
+          "StickHub-F_Mask.gts",
+          "StickHub-F_Paste.gtp",
+          "StickHub-F_Silkscreen.gto",
+          "StickHub-Margin.gbr",
+          "StickHub-User_Comments.gbr",
+          "StickHub-User_Drawings.gbr",
+          "StickHub-User_Eco1.gbr",
+          "StickHub-User_Eco2.gbr",
+          "StickHub-job.gbrjob",
+          "StickHub.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "control": {
+      "input": "/usr/share/kicad/demos/stickhub/StickHub.kicad_pcb",
+      "parts": 94,
+      "nets": 47,
+      "layers": 2,
+      "locked": [
+        "H1",
+        "J1",
+        "J2",
+        "J3",
+        "J4",
+        "J5",
+        "J6",
+        "J7",
+        "J8",
+        "J9"
+      ],
+      "timings": {
+        "intake_s": 0.09,
+        "placement_s": 0.01,
+        "routing_s": 590.31,
+        "verification_s": 1.3,
+        "report_s": 0.2,
+        "total_s": 592.29
+      },
+      "density_pct": {
+        "front": 96.2,
+        "back": 191.4,
+        "board_area_mm2": 609.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 478.1,
+          "decap_pass": 13,
+          "decap_total": 29
+        },
+        "best": {
+          "hpwl_mm": 478.1,
+          "overlaps": 302,
+          "outside": 3,
+          "decap_pass": 13,
+          "decap_total": 29,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 0,
+            "cost": 0.0,
+            "hpwl_mm": 478.1,
+            "overlaps": 302,
+            "outside": 3,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 0,
+              "accepted": 0,
+              "time_s": 0.0
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 314.09,
+            "reported_unrouted": 11,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 7
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 274.9,
+            "reported_unrouted": 4,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 5,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 588.99,
+        "reported_unrouted": 4,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 796.0,
+        "via_count": 71,
+        "segment_count": 797
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 3,
+        "violations_total": 126,
+        "by_category": {
+          "manufacturing": 32,
+          "environment": 94
+        },
+        "errors_by_category": {
+          "manufacturing": 32
+        },
+        "by_type": {
+          "lib_footprint_issues": 94,
+          "solder_mask_bridge": 32
+        }
+      },
+      "claims": {
+        "verified": 24,
+        "rejected": 0
+      },
+      "fabrication": null
+    },
+    "error": null,
+    "place_time_per_seed_s": 42.6,
+    "wall_s": 1412.6
+  },
+  {
+    "board": "multichannel_mixer",
+    "baseline": {
+      "hpwl_mm": 2076.3,
+      "decap_pass": 0,
+      "decap_total": 5,
+      "route_stats": {
+        "track_length_mm": 1959.3,
+        "via_count": 29,
+        "segment_count": 576
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 251,
+        "by_category": {
+          "electrical": 13,
+          "cosmetic": 5,
+          "environment": 114,
+          "manufacturing": 4,
+          "parity": 115
+        },
+        "errors_by_category": {
+          "electrical": 12
+        },
+        "by_type": {
+          "footprint_symbol_mismatch": 115,
+          "lib_footprint_issues": 114,
+          "clearance": 12,
+          "silk_over_copper": 4,
+          "connection_width": 4,
+          "nonmirrored_text_on_back_layer": 1,
+          "silk_edge_clearance": 1
+        }
+      },
+      "lock": [
+        "J1",
+        "J5",
+        "J6",
+        "J7",
+        "J8",
+        "J9"
+      ],
+      "parts": 114,
+      "density_pct": {
+        "front": 49.8,
+        "back": 58.6,
+        "board_area_mm2": 12210.0
+      }
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/multichannel/multichannel_mixer.kicad_pcb",
+      "parts": 114,
+      "nets": 80,
+      "layers": 2,
+      "locked": [
+        "J1",
+        "J5",
+        "J6",
+        "J7",
+        "J8",
+        "J9"
+      ],
+      "timings": {
+        "intake_s": 0.23,
+        "placement_s": 51.43,
+        "routing_s": 771.11,
+        "verification_s": 2.29,
+        "report_s": 0.18,
+        "export_s": 1.5,
+        "total_s": 827.64
+      },
+      "density_pct": {
+        "front": 49.8,
+        "back": 58.6,
+        "board_area_mm2": 12210.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 2076.3,
+          "decap_pass": 0,
+          "decap_total": 5
+        },
+        "best": {
+          "hpwl_mm": 2111.1,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 2,
+          "decap_total": 5,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 3,
+            "cost": 1955.8,
+            "hpwl_mm": 2111.1,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 217600,
+              "accepted": 90075,
+              "anneal_time_s": 50.61,
+              "time_s": 50.87,
+              "T0": 5913.405704677994
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 1,
+            "cost": 2220.0,
+            "hpwl_mm": 2387.5,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 219648,
+              "accepted": 76485,
+              "anneal_time_s": 50.65,
+              "time_s": 50.97,
+              "T0": 3278.569632473093
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 4,
+            "cost": 2248.4,
+            "hpwl_mm": 2416.7,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 230912,
+              "accepted": 90641,
+              "anneal_time_s": 50.65,
+              "time_s": 50.92,
+              "T0": 5564.611833424214
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": false,
+        "stages": [
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 384.35,
+            "reported_unrouted": 139,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": [
+                "Default"
+              ]
+            },
+            "imported": true,
+            "unconnected_after_refill": 136
+          },
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 383.95,
+            "reported_unrouted": 152,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 2,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 768.3,
+        "reported_unrouted": 152,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 1431.1,
+        "via_count": 23,
+        "segment_count": 284
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 131,
+        "violations_total": 319,
+        "by_category": {
+          "electrical": 7,
+          "cosmetic": 82,
+          "environment": 114,
+          "manufacturing": 1,
+          "parity": 115
+        },
+        "errors_by_category": {
+          "electrical": 6
+        },
+        "by_type": {
+          "footprint_symbol_mismatch": 115,
+          "lib_footprint_issues": 114,
+          "silk_over_copper": 41,
+          "silk_overlap": 40,
+          "copper_edge_clearance": 6,
+          "nonmirrored_text_on_back_layer": 1,
+          "silk_edge_clearance": 1,
+          "connection_width": 1
+        }
+      },
+      "claims": {
+        "verified": 14,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "multichannel_mixer-B_Adhesive.gba",
+          "multichannel_mixer-B_Courtyard.gbr",
+          "multichannel_mixer-B_Cu.gbl",
+          "multichannel_mixer-B_Fab.gbr",
+          "multichannel_mixer-B_Mask.gbs",
+          "multichannel_mixer-B_Paste.gbp",
+          "multichannel_mixer-B_Silkscreen.gbo",
+          "multichannel_mixer-Edge_Cuts.gm1",
+          "multichannel_mixer-F_Adhesive.gta",
+          "multichannel_mixer-F_Courtyard.gbr",
+          "multichannel_mixer-F_Cu.gtl",
+          "multichannel_mixer-F_Fab.gbr",
+          "multichannel_mixer-F_Mask.gts",
+          "multichannel_mixer-F_Paste.gtp",
+          "multichannel_mixer-F_Silkscreen.gto",
+          "multichannel_mixer-Margin.gbr",
+          "multichannel_mixer-User_1.gbr",
+          "multichannel_mixer-User_2.gbr",
+          "multichannel_mixer-User_3.gbr",
+          "multichannel_mixer-User_4.gbr",
+          "multichannel_mixer-User_5.gbr",
+          "multichannel_mixer-User_6.gbr",
+          "multichannel_mixer-User_7.gbr",
+          "multichannel_mixer-User_8.gbr",
+          "multichannel_mixer-User_9.gbr",
+          "multichannel_mixer-User_Comments.gbr",
+          "multichannel_mixer-User_Drawings.gbr",
+          "multichannel_mixer-User_Eco1.gbr",
+          "multichannel_mixer-User_Eco2.gbr",
+          "multichannel_mixer-job.gbrjob",
+          "multichannel_mixer.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "control": {
+      "input": "/usr/share/kicad/demos/multichannel/multichannel_mixer.kicad_pcb",
+      "parts": 114,
+      "nets": 80,
+      "layers": 2,
+      "locked": [
+        "J1",
+        "J5",
+        "J6",
+        "J7",
+        "J8",
+        "J9"
+      ],
+      "timings": {
+        "intake_s": 0.24,
+        "placement_s": 0.01,
+        "routing_s": 587.82,
+        "verification_s": 2.0,
+        "report_s": 0.18,
+        "total_s": 590.72
+      },
+      "density_pct": {
+        "front": 49.8,
+        "back": 58.6,
+        "board_area_mm2": 12210.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 2076.3,
+          "decap_pass": 0,
+          "decap_total": 5
+        },
+        "best": {
+          "hpwl_mm": 2076.3,
+          "overlaps": 45,
+          "outside": 0,
+          "decap_pass": 0,
+          "decap_total": 5,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 0,
+            "cost": 0.0,
+            "hpwl_mm": 2076.3,
+            "overlaps": 45,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 0,
+              "accepted": 0,
+              "time_s": 0.0
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 202.23,
+            "reported_unrouted": 160,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": [
+                "Default"
+              ]
+            },
+            "imported": true,
+            "unconnected_after_refill": 160
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 383.24,
+            "reported_unrouted": 180,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 2,
+              "copper_graphics_keepouts": 0,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 585.47,
+        "reported_unrouted": 180,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 196.2,
+        "via_count": 3,
+        "segment_count": 63
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 160,
+        "violations_total": 239,
+        "by_category": {
+          "electrical": 1,
+          "cosmetic": 5,
+          "environment": 114,
+          "manufacturing": 4,
+          "parity": 115
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "footprint_symbol_mismatch": 115,
+          "lib_footprint_issues": 114,
+          "silk_over_copper": 4,
+          "connection_width": 4,
+          "nonmirrored_text_on_back_layer": 1,
+          "silk_edge_clearance": 1
+        }
+      },
+      "claims": {
+        "verified": 14,
+        "rejected": 0
+      },
+      "fabrication": null
+    },
+    "error": null,
+    "place_time_per_seed_s": 50.6,
+    "wall_s": 1420.5
+  },
+  {
+    "board": "kit_dev_coldfire",
+    "baseline": {
+      "hpwl_mm": 7896.5,
+      "decap_pass": 2,
+      "decap_total": 4,
+      "route_stats": {
+        "track_length_mm": 9412.3,
+        "via_count": 253,
+        "segment_count": 2934
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 160,
+        "by_category": {
+          "environment": 160
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 160
+        }
+      },
+      "lock": [
+        "J201",
+        "P301",
+        "P302",
+        "P303"
+      ],
+      "parts": 160,
+      "density_pct": {
+        "front": 52.8,
+        "back": 38.0,
+        "board_area_mm2": 14411.2
+      }
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/kit-dev-coldfire-xilinx_5213/kit-dev-coldfire-xilinx_5213.kicad_pcb",
+      "parts": 160,
+      "nets": 278,
+      "layers": 4,
+      "locked": [
+        "J201",
+        "P301",
+        "P302",
+        "P303"
+      ],
+      "timings": {
+        "intake_s": 0.34,
+        "placement_s": 70.14,
+        "routing_s": 777.03,
+        "verification_s": 3.27,
+        "report_s": 0.21,
+        "export_s": 1.94,
+        "total_s": 855.07
+      },
+      "density_pct": {
+        "front": 52.8,
+        "back": 38.0,
+        "board_area_mm2": 14411.2
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 7896.5,
+          "decap_pass": 2,
+          "decap_total": 4
+        },
+        "best": {
+          "hpwl_mm": 7063.8,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 1,
+          "decap_total": 4,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 3,
+            "cost": 6602.8,
+            "hpwl_mm": 7063.8,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 212224,
+              "accepted": 99895,
+              "anneal_time_s": 69.04,
+              "time_s": 69.56,
+              "T0": 8417.501085844098
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 4,
+            "cost": 7304.6,
+            "hpwl_mm": 7791.8,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 205568,
+              "accepted": 86463,
+              "anneal_time_s": 69.02,
+              "time_s": 69.46,
+              "T0": 5016.032513511926
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 2,
+            "cost": 7435.3,
+            "hpwl_mm": 7903.1,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 207104,
+              "accepted": 94709,
+              "anneal_time_s": 69.03,
+              "time_s": 69.5,
+              "T0": 8443.170509664786
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": false,
+        "stages": [
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 386.25,
+            "reported_unrouted": 27,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 5,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 25
+          },
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 386.79,
+            "reported_unrouted": 5,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 3,
+              "copper_graphics_keepouts": 5,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 773.04,
+        "reported_unrouted": 5,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 9124.6,
+        "via_count": 436,
+        "segment_count": 3251
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 5,
+        "violations_total": 317,
+        "by_category": {
+          "cosmetic": 153,
+          "environment": 160,
+          "electrical": 4
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 160,
+          "silk_overlap": 89,
+          "silk_over_copper": 64,
+          "track_dangling": 3,
+          "via_dangling": 1
+        }
+      },
+      "claims": {
+        "verified": 13,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "kit-dev-coldfire-xilinx_5213-B_Adhesive.gba",
+          "kit-dev-coldfire-xilinx_5213-B_Courtyard.gbr",
+          "kit-dev-coldfire-xilinx_5213-B_Cu.gbl",
+          "kit-dev-coldfire-xilinx_5213-B_Fab.gbr",
+          "kit-dev-coldfire-xilinx_5213-B_Mask.gbs",
+          "kit-dev-coldfire-xilinx_5213-B_Paste.gbp",
+          "kit-dev-coldfire-xilinx_5213-B_Silkscreen.gbo",
+          "kit-dev-coldfire-xilinx_5213-Edge_Cuts.gm1",
+          "kit-dev-coldfire-xilinx_5213-F_Adhesive.gta",
+          "kit-dev-coldfire-xilinx_5213-F_Courtyard.gbr",
+          "kit-dev-coldfire-xilinx_5213-F_Fab.gbr",
+          "kit-dev-coldfire-xilinx_5213-F_Mask.gts",
+          "kit-dev-coldfire-xilinx_5213-F_Paste.gtp",
+          "kit-dev-coldfire-xilinx_5213-F_Silkscreen.gto",
+          "kit-dev-coldfire-xilinx_5213-In1_Cu.g1",
+          "kit-dev-coldfire-xilinx_5213-In2_Cu.g2",
+          "kit-dev-coldfire-xilinx_5213-Margin.gbr",
+          "kit-dev-coldfire-xilinx_5213-Top_layer.gtl",
+          "kit-dev-coldfire-xilinx_5213-User_Comments.gbr",
+          "kit-dev-coldfire-xilinx_5213-User_Drawings.gbr",
+          "kit-dev-coldfire-xilinx_5213-job.gbrjob",
+          "kit-dev-coldfire-xilinx_5213.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "control": {
+      "input": "/usr/share/kicad/demos/kit-dev-coldfire-xilinx_5213/kit-dev-coldfire-xilinx_5213.kicad_pcb",
+      "parts": 160,
+      "nets": 278,
+      "layers": 4,
+      "locked": [
+        "J201",
+        "P301",
+        "P302",
+        "P303"
+      ],
+      "timings": {
+        "intake_s": 0.33,
+        "placement_s": 0.02,
+        "routing_s": 443.37,
+        "verification_s": 2.67,
+        "report_s": 0.18,
+        "total_s": 447.55
+      },
+      "density_pct": {
+        "front": 52.8,
+        "back": 38.0,
+        "board_area_mm2": 14411.2
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 7896.5,
+          "decap_pass": 2,
+          "decap_total": 4
+        },
+        "best": {
+          "hpwl_mm": 7896.5,
+          "overlaps": 6,
+          "outside": 5,
+          "decap_pass": 2,
+          "decap_total": 4,
+          "legalization_failures": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 0,
+            "cost": 0.0,
+            "hpwl_mm": 7896.5,
+            "overlaps": 6,
+            "outside": 5,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 0,
+              "accepted": 0,
+              "time_s": 0.0
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": false,
+        "stages": [
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 385.51,
+            "reported_unrouted": 11,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 5,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 9
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 53.82,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 3,
+              "copper_graphics_keepouts": 5,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 439.33,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 9381.2,
+        "via_count": 365,
+        "segment_count": 2800
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 163,
+        "by_category": {
+          "environment": 160,
+          "electrical": 3
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 160,
+          "track_dangling": 2,
+          "via_dangling": 1
+        }
+      },
+      "claims": {
+        "verified": 13,
+        "rejected": 0
+      },
+      "fabrication": null
+    },
+    "error": null,
+    "place_time_per_seed_s": 69.0,
+    "wall_s": 1305.9,
+    "note": "본 실행 후 발견한 Freerouting 넥다운 선폭 반올림 문제(0.1981→0.198 mm)를 고친 뒤 이 보드만 두 조건(NOAH·원본 배치) 모두 재측정했습니다. 수정 전에는 두 조건 모두 같은 선폭 위반 199건이 있었습니다."
   }
 ]

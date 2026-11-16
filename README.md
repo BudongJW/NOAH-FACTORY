@@ -10,7 +10,8 @@
 | [`docs/product-plan.md`](docs/product-plan.md) | 제품 기획서 |
 | [`docs/architecture.md`](docs/architecture.md) | 기술 아키텍처 |
 | [`docs/decisions.md`](docs/decisions.md) | 결정 기록 |
-| [`bench/results/summary.md`](bench/results/summary.md) | Phase 0 벤치마크 결과 |
+| [`bench/results/summary.md`](bench/results/summary.md), [`analysis.md`](bench/results/analysis.md) | Phase 0 벤치마크 결과와 해석 (KiCad 데모 8개, 대조 실험 포함) |
+| [`docs/examples/pic_programmer_report.md`](docs/examples/pic_programmer_report.md) | 파이프라인이 만든 설계 리뷰 리포트 예시 |
 
 ## 파이프라인
 

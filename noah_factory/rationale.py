@@ -102,7 +102,7 @@ def build_claims(store: EvidenceStore, ids: dict, *, before: dict, after: dict, 
 
     if "density" in ids:
         ev = store.get(ids["density"])
-        text = (f"부품 면적(코트야드 사각형 근사)은 보드 면적의 앞면 {_fmt(ev.detail['front'])}%, "
+        text = (f"부품 면적(코트야드를 감싸는 사각형 기준)은 보드 면적의 앞면 {_fmt(ev.detail['front'])}%, "
                 f"뒷면 {_fmt(ev.detail['back'])}%입니다.")
         if not ev.passed:
             text += (f" 현재 배치 모델이 다룰 수 있는 {_fmt(ev.limit)}%를 넘어, 겹침 없는 배치를 찾지 못할 수 "
@@ -127,13 +127,14 @@ def build_claims(store: EvidenceStore, ids: dict, *, before: dict, after: dict, 
             f"(입력 배치에서는 {ev.detail['input_pass']}개).", [ids["decap_summary"]])
         worst_first = sorted(ids["decaps"], key=lambda t: (t[1]["pass"], -t[1]["distance_mm"]))
         for eid, d in worst_first[:MAX_DECAP_LINES]:
-            verdict = "만족합니다" if d["pass"] else "만족하지 못합니다"
-            add("decap", f"`{d['cap']}`는 `{d['ic']}`의 `{d['net']}` 핀에서 {_fmt(d['distance_mm'])} mm "
-                f"떨어져 있어 기준({_fmt(d['limit_mm'])} mm 이내)을 {verdict}.", [eid])
+            # two decimals: one decimal could print "3.0 mm, limit 3.0 mm: fails" for 3.02 mm
+            verdict = "충족" if d["pass"] else "미달"
+            add("decap", f"`{d['cap']}`: `{d['ic']}`의 `{d['net']}` 핀까지 {_fmt(d['distance_mm'], 2)} mm "
+                f"(기준 {_fmt(d['limit_mm'])} mm 이내) — {verdict}", [eid])
     for eid, e in ids["edges"]:
-        verdict = "가장자리에 있습니다" if e["pass"] else "가장자리에서 떨어져 있습니다"
-        add("placement", f"외부 커넥터 `{e['ref']}`는 보드 외곽에서 {_fmt(e['distance_mm'])} mm 거리로 "
-            f"{verdict} (기준 {_fmt(e['limit_mm'])} mm).", [eid])
+        verdict = "충족" if e["pass"] else "미달"
+        add("placement", f"외부 커넥터 `{e['ref']}`: 보드 외곽까지 {_fmt(e['distance_mm'], 2)} mm "
+            f"(기준 {_fmt(e['limit_mm'])} mm 이내) — {verdict}", [eid])
     if drc and drc.get("ok"):
         add("routing", f"배선 후 미배선 연결은 {drc['unconnected']}개입니다.", [ids["unrouted"]])
         c = store.get(ids["drc"]).detail

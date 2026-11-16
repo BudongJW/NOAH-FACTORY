@@ -472,4 +472,17 @@ flowchart LR
 
 ### 15.3 벤치마크
 
-결과와 방법은 [`bench/results/summary.md`](../bench/results/summary.md)에 있습니다.
+결과와 방법은 [`bench/results/summary.md`](../bench/results/summary.md), 해석은 [`bench/results/analysis.md`](../bench/results/analysis.md)에 있습니다.
+
+요약 (KiCad 데모 8개, 4코어, 각 1회):
+
+| 지표 | 결과 |
+|---|---|
+| 무인 완주 | 8/8 |
+| 미배선 0 | 4/8 |
+| 전기 DRC 0 | 3/8 |
+| 배치 시간 (4시드 병렬) | 5.6~70초 |
+| 전체 시간 | 12초~14분 (배선 시간 제한 2단계 × 420초) |
+| 근거 문장 | 105개 모두 검증 통과 |
+
+사람 배치를 같은 파이프라인으로 배선한 대조 실험에서, 배치 병목 3개 보드(interf_u, complex_hierarchy, kit_dev_coldfire)와 배선기 병목 1개 보드(multichannel_mixer)가 구분되었습니다. 다음 엔진 과제는 §4.1의 "배선 가능성 평가"를 비용 함수 안으로 넣는 것(혼잡도 추정)입니다.
