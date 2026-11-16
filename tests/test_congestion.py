@@ -1,4 +1,6 @@
 """Congestion (RUDY) model: incremental updates must match a full rebuild."""
+# Placement runs here are bounded by move count (time_limit_s is large), so results do not
+# depend on machine load.
 
 import random
 
@@ -57,7 +59,7 @@ def test_congestion_weight_lowers_penalty_on_a_tight_board():
     ir = _board(n_chain=14)
     ir.board.routing_layers = 1
     ir.board.track_pitch_mm = 2.0  # little capacity, so congestion is visible
-    base = anneal(PlacementProblem(ir, PlacementConfig(time_limit_s=4, init="random")), seed=2)
-    cong = anneal(PlacementProblem(ir, PlacementConfig(time_limit_s=4, init="random", w_congestion=5.0)), seed=2)
+    base = anneal(PlacementProblem(ir, PlacementConfig(time_limit_s=600, moves_per_component=1500, init="random")), seed=2)
+    cong = anneal(PlacementProblem(ir, PlacementConfig(time_limit_s=600, moves_per_component=1500, init="random", w_congestion=5.0)), seed=2)
     assert cong.breakdown["congestion"]["penalty"] <= base.breakdown["congestion"]["penalty"]
     assert cong.breakdown["overlaps"] == []

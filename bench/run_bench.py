@@ -102,7 +102,7 @@ def main() -> int:
         write_summary(rows, a.out / "summary.md")
         print(f"wrote {a.out / 'summary.md'}")
         return 0
-    work_root = a.work or ROOT / "runs" / "bench"
+    work_root = (a.work or ROOT / "runs" / "bench").resolve()
     rows = []
     for name in [b.strip() for b in a.boards.split(",") if b.strip()]:
         path = DEMOS / BOARDS[name]

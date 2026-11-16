@@ -50,7 +50,7 @@ def test_rotation_convention_matches_kicad():
 
 def test_anneal_is_legal_respects_locks_and_rules():
     ir = _board()
-    cfg = PlacementConfig(time_limit_s=5, moves_per_component=2000, init="random")
+    cfg = PlacementConfig(time_limit_s=600, moves_per_component=2000, init="random")
     p = PlacementProblem(ir, cfg)
     res = anneal(p, seed=7)
     bd = res.breakdown
@@ -71,7 +71,7 @@ def test_parts_avoid_copper_obstacles():
     ir = _board()
     # a copper text block across the middle of the front side, and a keepout on all sides
     ir.board.obstacles = [(10.0, 12.0, 40.0, 18.0, 0, "LOGO"), (42.0, 2.0, 48.0, 8.0, 3, "keepout")]
-    cfg = PlacementConfig(time_limit_s=5, moves_per_component=2000, init="random")
+    cfg = PlacementConfig(time_limit_s=600, moves_per_component=2000, init="random")
     p = PlacementProblem(ir, cfg)
     res = anneal(p, seed=11)
     assert res.legalization_failures == []
@@ -80,7 +80,7 @@ def test_parts_avoid_copper_obstacles():
 
 def test_anneal_shortens_a_scrambled_chain():
     ir = _board()
-    cfg = PlacementConfig(time_limit_s=5, moves_per_component=2000, init="random")
+    cfg = PlacementConfig(time_limit_s=600, moves_per_component=2000, init="random")
     p = PlacementProblem(ir, cfg)
     X0 = np.array([c.x for c in ir.components])
     Y0 = np.array([c.y for c in ir.components])

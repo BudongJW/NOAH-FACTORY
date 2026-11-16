@@ -117,7 +117,8 @@ def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig)
 def run(cfg: RunConfig, log=print) -> dict:
     t_all = time.monotonic()
     timings: dict[str, float] = {}
-    out = cfg.out
+    out = cfg.out = cfg.out.resolve()
+    cfg.input = cfg.input.resolve()
     out.mkdir(parents=True, exist_ok=True)
     stem = cfg.input.stem
 

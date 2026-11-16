@@ -53,7 +53,9 @@ def run_freerouting(dsn: Path, ses: Path, cfg: RoutingConfig, log_path: Path,
                     extra_inputs: list[Path] | None = None) -> dict:
     """extra_inputs: .kicad_pro (minimum track width) and .kicad_dru (custom clearance rules);
     the Specctra export drops both, so Freerouting would otherwise route below KiCad's rules."""
-    design = "+".join([str(dsn)] + [str(p) for p in (extra_inputs or []) if p.exists()])
+    # Absolute paths: Freerouting runs with cwd=dsn.parent, so relative paths would not resolve.
+    dsn, ses, log_path = dsn.resolve(), ses.resolve(), log_path.resolve()
+    design = "+".join([str(dsn)] + [str(p.resolve()) for p in (extra_inputs or []) if p.exists()])
     # Freerouting's own job timeout stops the router gracefully and still writes the session
     # (best result so far). Killing the process instead loses all routing work.
     job_s = max(30, cfg.timeout_s - 40)
