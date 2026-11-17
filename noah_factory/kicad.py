@@ -271,6 +271,24 @@ def strip_routing(board) -> int:
     return len(items)
 
 
+def copper_layers_with_planes(board) -> tuple[list[str], set[str]]:
+    """Copper layer names in stack order, and those carrying a plane (a pour that covers at
+    least PLANE_SHARE of the board; teardrops excluded)."""
+    edges = board.GetBoardEdgesBoundingBox()
+    board_area = max(_mm(edges.GetWidth()) * _mm(edges.GetHeight()), 1e-9)
+    stack = list(board.GetEnabledLayers().CuStack())
+    names = [board.GetLayerName(layer) for layer in stack]
+    planes = set()
+    for z in board.Zones():
+        if z.GetIsRuleArea() or z.IsTeardropArea():
+            continue
+        if z.CalculateOutlineArea() / NM_PER_MM ** 2 / board_area < PLANE_SHARE:
+            continue
+        for layer in z.GetLayerSet().CuStack():
+            planes.add(board.GetLayerName(layer))
+    return names, planes
+
+
 def _effective_zone_connection(pcbnew, pad, zone) -> int:
     """Pad -> footprint -> zone override chain, with THT_THERMAL resolved per pad type."""
     c = pad.GetLocalZoneConnection()

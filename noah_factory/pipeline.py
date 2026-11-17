@@ -16,7 +16,8 @@ from pathlib import Path
 from . import __version__
 from .evidence import EvidenceStore
 from .export import export_fabrication
-from .kicad import (apply_placement, board_to_ir, export_dsn, import_ses, kicad_version, load_board,
+from .kicad import (apply_placement, board_to_ir, copper_layers_with_planes, export_dsn, import_ses,
+                    kicad_version, load_board,
                     delete_tracks_by_uuid, lock_refs, min_track_width_um, prepare_for_router,
                     remove_layout_bound_zones,
                     routing_stats, save_board, strip_routing)
@@ -25,7 +26,7 @@ import numpy as np
 from .placement import (PlacementConfig, PlacementProblem, PlacementResult, apply_result, current_metrics,
                         place_candidates)
 from .rationale import build_claims, build_evidence, render_report
-from .routing import RoutingConfig, freerouting_version, run_freerouting
+from .routing import RoutingConfig, freerouting_version, run_freerouting, write_layer_rules
 from .verify import kicad_cli_version, run_drc
 
 PROJECT_SUFFIXES = (".kicad_pro", ".kicad_sch", ".kicad_dru")
@@ -90,6 +91,10 @@ def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig)
     route_dir = out / "routing"
     route_dir.mkdir(exist_ok=True)
     rules = [out / "input" / f"{stem}.kicad_pro", out / "input" / f"{stem}.kicad_dru"]
+    layers, planes = copper_layers_with_planes(load_board(board_path))
+    layer_rules = route_dir / f"{stem}.layers.rules"
+    if write_layer_rules(layer_rules, stem, layers, planes, rcfg.plane_layer_cost_factor):
+        rules.append(layer_rules)
     stages = []
 
     res, ses = _route_stage(board_path, route_dir, stem, "stage1", rcfg, rules, drop_pour_nets=None)
@@ -118,6 +123,7 @@ def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig)
         "reported_unrouted": last.get("reported_unrouted"),
         "reported_violations": last.get("reported_violations"),
         "max_passes": rcfg.max_passes,
+        "plane_layers_penalised": sorted(planes) if layer_rules in rules else [],
     }
 
 

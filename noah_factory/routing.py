@@ -32,10 +32,36 @@ class RoutingConfig:
     # .kicad_pro but truncates to whole micrometres (198.12 um -> 198 um < KiCad minimum),
     # so the pipeline passes the board minimum rounded up.
     neck_width_um: int | None = None
+    # Trace-cost multiplier on layers that carry a plane (see write_layer_rules); 1.0 disables.
+    plane_layer_cost_factor: float = 4.0
 
     def __post_init__(self):
         if not self.java:
             self.java = _default_java()
+
+
+def write_layer_rules(path: Path, design: str, layers: list[str], plane_layers: set[str],
+                      factor: float) -> bool:
+    """Freerouting rules file that makes tracks `factor` times costlier on plane layers.
+
+    Tracks on a pour layer cut the pour into pieces; pads then connect to isolated islands
+    (KiCad `starved_thermal`). Raising the trace cost there keeps most wiring on the other layers
+    (interf_u: bottom-layer share 47% -> 23% in a 60 s trial) without forbidding the layer.
+    Returns False (and writes nothing) when there is nothing to bias."""
+    if factor <= 1.0 or not plane_layers or set(layers) <= plane_layers:
+        return False
+    def quote(name):
+        return f'"{name}"' if any(ch in name for ch in ' ()"') else name
+    lines = [f"(rules PCB {quote(design)}", "  (autoroute_settings"]
+    for i, name in enumerate(layers):
+        k = factor if name in plane_layers else 1.0
+        lines += [f"    (layer_rule {quote(name)}", "      (active on)",
+                  f"      (preferred_direction {'horizontal' if i % 2 == 0 else 'vertical'})",
+                  f"      (preferred_direction_trace_costs {1.0 * k:.1f})",
+                  f"      (against_preferred_direction_trace_costs {2.5 * k:.1f})", "    )"]
+    lines += ["  )", ")"]
+    path.write_text("\n".join(lines) + "\n")
+    return True
 
 
 def freerouting_version(cfg: RoutingConfig) -> str:
