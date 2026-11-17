@@ -271,6 +271,112 @@ def strip_routing(board) -> int:
     return len(items)
 
 
+def _effective_zone_connection(pcbnew, pad, zone) -> int:
+    """Pad -> footprint -> zone override chain, with THT_THERMAL resolved per pad type."""
+    c = pad.GetLocalZoneConnection()
+    if c == pcbnew.ZONE_CONNECTION_INHERITED:
+        fp = pad.GetParentFootprint()
+        if fp is not None:
+            c = fp.GetLocalZoneConnection()
+    if c == pcbnew.ZONE_CONNECTION_INHERITED:
+        c = zone.GetPadConnection()
+    if c == pcbnew.ZONE_CONNECTION_THT_THERMAL:
+        c = pcbnew.ZONE_CONNECTION_THERMAL if pad.HasHole() else pcbnew.ZONE_CONNECTION_FULL
+    return c
+
+
+def _overlaps(a, b) -> bool:
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+def _keepout(pcbnew, board, layer, rect) -> None:
+    zone = pcbnew.ZONE(board)
+    zone.SetIsRuleArea(True)
+    zone.SetDoNotAllowTracks(True)
+    zone.SetDoNotAllowVias(True)
+    zone.SetDoNotAllowPads(False)
+    zone.SetDoNotAllowFootprints(False)
+    zone.SetDoNotAllowZoneFills(False)
+    zone.SetLayer(layer)
+    l, t, r, b = (int(v) for v in rect)
+    outline = zone.Outline()
+    outline.NewOutline()
+    for x, y in ((l, t), (r, t), (r, b), (l, b)):
+        outline.Append(x, y)
+    board.Add(zone)
+
+
+def protect_thermal_spokes(board) -> dict:
+    """Keep routed copper out of the thermal-spoke corridors of pads connected to a pour.
+
+    KiCad's `starved_thermal` errors on the benchmark were all spokes cut by other nets' tracks
+    and vias (bench/thermal_check.py: 30 of 30 starved pads would keep enough spokes without
+    them). For every pad that joins a pour with a thermal relief, this adds no-track/no-via
+    keepouts over as many spoke corridors as KiCad requires (m_MinResolvedSpokes, default 2):
+    pad edge -> thermal gap + 2 x spoke, spoke width + zone clearance on each side. Corridors
+    already blocked by another net's pad or the board edge are skipped (those spokes cannot form
+    anyway); among the rest, the least crowded directions are chosen, leaving the other sides and
+    the diagonals free so the pad itself can still be routed. Use on the router copy only."""
+    pcbnew = _pcbnew()
+    ds = board.GetDesignSettings()
+    need = max(int(ds.m_MinResolvedSpokes), 1)
+    min_clear = int(ds.m_MinClearance)
+    e = board.GetBoardEdgesBoundingBox()
+    edge = (e.GetLeft(), e.GetTop(), e.GetRight(), e.GetBottom())
+
+    zones: dict = {}
+    for z in board.Zones():
+        if z.GetIsRuleArea() or z.GetNetCode() <= 0:
+            continue
+        for layer in z.GetLayerSet().CuStack():
+            zones.setdefault((z.GetNetCode(), layer), z)
+    pads = list(board.GetPads())
+    boxes: dict = {}
+    for p in pads:
+        bb = p.GetBoundingBox()
+        for layer in p.GetLayerSet().CuStack():
+            boxes.setdefault(layer, []).append((p.GetNetCode(), (bb.GetLeft(), bb.GetTop(), bb.GetRight(), bb.GetBottom())))
+
+    protected = corridors_added = 0
+    for p in pads:
+        net = p.GetNetCode()
+        if net <= 0:
+            continue
+        for layer in p.GetLayerSet().CuStack():
+            z = zones.get((net, layer))
+            if z is None or _effective_zone_connection(pcbnew, p, z) != pcbnew.ZONE_CONNECTION_THERMAL:
+                continue
+            gap = p.GetLocalThermalGapOverride() or z.GetThermalReliefGap()
+            spoke = p.GetLocalThermalSpokeWidthOverride() or z.GetThermalReliefSpokeWidth()
+            clear = max(int(z.GetLocalClearance() or 0), min_clear)
+            reach = gap + 2 * max(spoke, z.GetMinThickness())
+            half = spoke // 2 + clear
+            bb = p.GetBoundingBox()
+            l, t, r, b = bb.GetLeft(), bb.GetTop(), bb.GetRight(), bb.GetBottom()
+            cx, cy = (l + r) // 2, (t + b) // 2
+            options = [(r, cy - half, r + reach, cy + half, (1, 0)), (l - reach, cy - half, l, cy + half, (-1, 0)),
+                       (cx - half, b, cx + half, b + reach, (0, 1)), (cx - half, t - reach, cx + half, t, (0, -1))]
+            others = [bx for n, bx in boxes.get(layer, []) if n != net]
+            free = []
+            for o in options:
+                rect, (dx, dy) = o[:4], o[4]
+                inside = rect[0] >= edge[0] and rect[1] >= edge[1] and rect[2] <= edge[2] and rect[3] <= edge[3]
+                if not inside or any(_overlaps(rect, bx) for bx in others):
+                    continue
+                # crowding: other pads within three corridor lengths in this direction
+                far = (min(rect[0], rect[0] + dx * 3 * reach), min(rect[1], rect[1] + dy * 3 * reach),
+                       max(rect[2], rect[2] + dx * 3 * reach), max(rect[3], rect[3] + dy * 3 * reach))
+                free.append((sum(_overlaps(far, bx) for bx in others), rect))
+            if not free:
+                continue
+            free.sort(key=lambda f: f[0])
+            for _, rect in free[:need]:
+                _keepout(pcbnew, board, layer, rect)
+                corridors_added += 1
+            protected += 1
+    return {"pads": protected, "corridors": corridors_added}
+
+
 def delete_tracks_by_uuid(board, uuids: set[str]) -> int:
     """Delete tracks/vias whose KiCad UUID is in `uuids` (e.g. the ones DRC reports dangling)."""
     doomed = [t for t in board.GetTracks() if t.m_Uuid.AsString() in uuids]
@@ -299,7 +405,8 @@ def routing_stats(board) -> dict:
     return {"track_length_mm": round(tracks, 1), "via_count": vias, "segment_count": segments}
 
 
-def prepare_for_router(board, clearance_mm: float = 0.3, drop_pour_nets: set[str] | None = None) -> dict:
+def prepare_for_router(board, clearance_mm: float = 0.3, drop_pour_nets: set[str] | None = None,
+                       protect_spokes: bool = True) -> dict:
     """Make a board copy safe for Freerouting before DSN export.
 
     * Free copper texts and graphics are turned into keepout rule areas: the Specctra export
@@ -312,10 +419,15 @@ def prepare_for_router(board, clearance_mm: float = 0.3, drop_pour_nets: set[str
       nets stay. (Keeping inner planes in stage 2 was tried: +3.3V went from 17 to 15 unconnected
       on kit_dev_coldfire, because the router again considered it connected.) Fan-out stubs the
       router may leave on those nets are removed afterwards by the dangling-item cleanup.
+    * protect_spokes: keep routed copper out of thermal-spoke corridors of pads that join a pour
+      (see protect_thermal_spokes).
     Use this on a throw-away copy only; import the session into the real board.
     """
     pcbnew = _pcbnew()
     clamped = clamp_netclasses_to_board_minimums(board)
+    # Corridors are computed while every pour still exists: a pour dropped for stage 2 is refilled
+    # on the real board afterwards, so its pads need their spokes too.
+    spokes = protect_thermal_spokes(board) if protect_spokes else {"pads": 0, "corridors": 0}
     pours = [z for z in board.Zones()
              if drop_pour_nets and not z.GetIsRuleArea() and z.GetNetname() in drop_pour_nets]
     with quiet_native_stderr():
@@ -327,23 +439,11 @@ def prepare_for_router(board, clearance_mm: float = 0.3, drop_pour_nets: set[str
         if not item.IsOnCopperLayer():
             continue
         bb = item.GetBoundingBox()
-        zone = pcbnew.ZONE(board)
-        zone.SetIsRuleArea(True)
-        zone.SetDoNotAllowTracks(True)
-        zone.SetDoNotAllowVias(True)
-        zone.SetDoNotAllowPads(False)
-        zone.SetDoNotAllowFootprints(False)
-        zone.SetDoNotAllowZoneFills(False)
-        zone.SetLayer(item.GetLayer())
-        l, t = bb.GetLeft() - margin, bb.GetTop() - margin
-        r, b = bb.GetRight() + margin, bb.GetBottom() + margin
-        outline = zone.Outline()
-        outline.NewOutline()
-        for x, y in ((l, t), (r, t), (r, b), (l, b)):
-            outline.Append(x, y)
-        board.Add(zone)
+        _keepout(pcbnew, board, item.GetLayer(),
+                 (bb.GetLeft() - margin, bb.GetTop() - margin, bb.GetRight() + margin, bb.GetBottom() + margin))
         keepouts += 1
-    return {"pours_removed": len(pours), "copper_graphics_keepouts": keepouts, "netclasses_clamped": clamped}
+    return {"pours_removed": len(pours), "copper_graphics_keepouts": keepouts, "netclasses_clamped": clamped,
+            "spoke_corridors": spokes["corridors"], "spoke_protected_pads": spokes["pads"]}
 
 
 def min_track_width_um(board) -> int:

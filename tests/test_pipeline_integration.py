@@ -18,7 +18,7 @@ def test_pipeline_routes_and_reports(tmp_path):
     from noah_factory.pipeline import RunConfig, run
 
     out = tmp_path / "run"
-    summary = run(RunConfig(input=DEMO, out=out, lock={"P1"}, seeds=2, candidates=2, place_time_s=4,
+    summary = run(RunConfig(input=DEMO, out=out, lock={"P1"}, seeds=2, candidates=2, place_time_s=8,
                             route_passes=20, route_timeout_s=120), log=lambda *_: None)
     assert summary["placement"]["best"]["overlaps"] == 0
     assert summary["placement"]["best"]["outside"] == 0

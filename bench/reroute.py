@@ -36,11 +36,13 @@ def main() -> int:
     ap.add_argument("ab_root", type=Path)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--boards", default="")
+    ap.add_argument("--arms", default="", help="comma-separated arm names to include")
     ap.add_argument("--route-timeout", type=int, default=300)
     a = ap.parse_args()
     wanted = {b for b in a.boards.split(",") if b}
+    arms = {x for x in a.arms.split(",") if x}
     rows = []
-    for arm in sorted(p for p in a.ab_root.iterdir() if p.is_dir()):
+    for arm in sorted(p for p in a.ab_root.iterdir() if p.is_dir() and (not arms or p.name in arms)):
         for board_dir in sorted(p for p in arm.iterdir() if p.is_dir()):
             if wanted and board_dir.name not in wanted:
                 continue
