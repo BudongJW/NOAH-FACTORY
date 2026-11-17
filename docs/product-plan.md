@@ -277,7 +277,7 @@ D2 범위(기존 KiCad 파일 → 배치·배선 → 검증 → 근거 리포트
 
 **다음 단계** (Phase 0 잔여 → Phase 1 착수 전)
 1. ~~혼잡도를 고려한 배치 비용~~ → **완료 (2026-11-17)**: RUDY 혼잡도 항 기본 적용, 배치 병목 보드 미배선 합계 26 → 13 ([`bench/results/congestion_ab.md`](../bench/results/congestion_ab.md))
-2. 배선 후처리: ~~끊긴 트랙 제거~~ **완료** (끊긴 조각 14 → 0, 전기 DRC 48 → 31). 남은 과제는 열 차단 스포크 부족(`starved_thermal`, 남은 전기 DRC의 97%)
+2. 배선 후처리: ~~끊긴 트랙 제거~~ **완료** (끊긴 조각 14 → 0, 전기 DRC 48 → 31). ~~열 차단 스포크 부족~~ **개선** (starved_thermal 30 → 18, 전기 DRC 31 → 21; [`bench/results/thermal_improvement.md`](../bench/results/thermal_improvement.md)). 남은 건은 촘촘한 핀 배열 부품 주변
 3. 배선기 실행 편차(같은 조건에서 미연결 ±1.5개) 대응: 반복 실행·분산 보고, 재현성 확보
 4. 벤치마크 30개 이상으로 확대, 보드당 다회 실행
 5. PCB 전문가와 디커플링·커넥터 규칙 보정

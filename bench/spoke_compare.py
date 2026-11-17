@@ -1,6 +1,8 @@
-"""Compare two re-route runs of the same placements (e.g. without / with spoke protection).
+"""Compare re-route runs of the same placements (e.g. without / with spoke protection).
 
-    python bench/spoke_compare.py BASE_DIR NEW_DIR [--out FILE]
+    python bench/spoke_compare.py DIR [DIR ...] [--labels a,b,c] [--out FILE]
+
+Each DIR is a bench/reroute.py output (<arm>/<board>/run.json + drc.json).
 """
 
 from __future__ import annotations
@@ -29,26 +31,26 @@ def stats(run: Path) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("base", type=Path)
-    ap.add_argument("new", type=Path)
+    ap.add_argument("dirs", type=Path, nargs="+")
+    ap.add_argument("--labels", default="")
     ap.add_argument("--out", type=Path)
     a = ap.parse_args()
-    lines = ["| 조건 | 보드 | starved_thermal (전→후) | 그중 스포크 부족 | 그중 고립 섬 | 전기 DRC | 미배선 | 배선 시간 s |",
-             "|---|---|---|---|---|---|---|---|"]
-    tot = {"base": Counter(), "new": Counter()}
+    labels = a.labels.split(",") if a.labels else [d.name for d in a.dirs]
+    keys = [("starved", "starved_thermal"), ("spokes", "그중 스포크 부족"), ("island", "그중 고립 섬"),
+            ("electrical", "전기 DRC"), ("unrouted", "미배선"), ("route_s", "배선 시간 s")]
+    head = "| 조건 | 보드 | " + " | ".join(name for _, name in keys) + " |"
+    lines = [f"값은 {' / '.join(labels)} 순서입니다.", "", head, "|" + "---|" * (len(keys) + 2)]
+    tot = [Counter() for _ in a.dirs]
     for arm in ARMS:
         for b in BOARDS:
-            x, y = stats(a.base / arm / b), stats(a.new / arm / b)
-            for k in x:
-                tot["base"][k] += x[k]
-                tot["new"][k] += y[k]
-            lines.append(f"| {arm} | {b} | {x['starved']} → {y['starved']} | {x['spokes']} → {y['spokes']} | "
-                         f"{x['island']} → {y['island']} | {x['electrical']} → {y['electrical']} | "
-                         f"{x['unrouted']} → {y['unrouted']} | {x['route_s']:.0f} → {y['route_s']:.0f} |")
-    t0, t1 = tot["base"], tot["new"]
-    lines.append(f"| **합계** | | **{t0['starved']} → {t1['starved']}** | {t0['spokes']} → {t1['spokes']} | "
-                 f"{t0['island']} → {t1['island']} | **{t0['electrical']} → {t1['electrical']}** | "
-                 f"{t0['unrouted']} → {t1['unrouted']} | {t0['route_s']:.0f} → {t1['route_s']:.0f} |")
+            st = [stats(d / arm / b) for d in a.dirs]
+            for t, x in zip(tot, st):
+                for k in x:
+                    t[k] += x[k]
+            cells = [" / ".join(f"{x[k]:.0f}" for x in st) for k, _ in keys]
+            lines.append(f"| {arm} | {b} | " + " | ".join(cells) + " |")
+    cells = [" / ".join(f"**{t[k]:.0f}**" for t in tot) for k, _ in keys]
+    lines.append("| **합계** | | " + " | ".join(cells) + " |")
     text = "\n".join(lines) + "\n"
     if a.out:
         a.out.write_text(text, encoding="utf-8")

@@ -69,3 +69,5 @@ MODI Factory가 밝힌 처리 시간(약 90분)과 비교하면 속도는 충분
 | complex_hierarchy 전기 DRC | 옛 티어드롭(구리 영역 167개) 제거 후 8 → 0 |
 | 배선 수정 재검증 (같은 배치 12건) | 끊긴 조각 14 → 0, 전기 DRC 48 → 31 |
 | 남은 과제 | `starved_thermal`, 배선기 실행 편차(같은 조건 평균 ±1.5개), 패드가 코트야드 밖으로 나온 풋프린트(수정 반영, 미측정) |
+
+| starved_thermal 개선 (같은 배치 12건, 2026-11-17) | 스포크 통로 보호 + 평면층 벌점 두 방식 병렬 선택: starved_thermal 30 → 18, 전기 DRC 31 → 21, 미배선 50 → 28 ([`thermal_improvement.md`](./thermal_improvement.md)) |

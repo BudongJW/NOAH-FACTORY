@@ -1,0 +1,314 @@
+[
+  {
+    "arm": "w0_s0",
+    "board": "complex_hierarchy",
+    "before": {
+      "unrouted": 0,
+      "electrical": 0,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 5.85,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 0,
+      "electrical": 0,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 14.64,
+      "dangling_removed": 0
+    }
+  },
+  {
+    "arm": "w0_s0",
+    "board": "interf_u",
+    "before": {
+      "unrouted": 4,
+      "electrical": 9,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 9,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 529.25,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 4,
+      "electrical": 8,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 8,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 532.07,
+      "dangling_removed": 0
+    }
+  },
+  {
+    "arm": "w0_s0",
+    "board": "kit_dev_coldfire",
+    "before": {
+      "unrouted": 13,
+      "electrical": 1,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 1,
+      "clearance": 0,
+      "route_s": 534.57,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 5,
+      "electrical": 1,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 1,
+      "clearance": 0,
+      "route_s": 542.65,
+      "dangling_removed": 16
+    }
+  },
+  {
+    "arm": "w0_s4",
+    "board": "complex_hierarchy",
+    "before": {
+      "unrouted": 0,
+      "electrical": 0,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 18.67,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 0,
+      "electrical": 0,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 15.11,
+      "dangling_removed": 0
+    }
+  },
+  {
+    "arm": "w0_s4",
+    "board": "interf_u",
+    "before": {
+      "unrouted": 7,
+      "electrical": 5,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 5,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 529.08,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 5,
+      "electrical": 6,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 6,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 531.49,
+      "dangling_removed": 0
+    }
+  },
+  {
+    "arm": "w0_s4",
+    "board": "kit_dev_coldfire",
+    "before": {
+      "unrouted": 2,
+      "electrical": 1,
+      "track_dangling": 1,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 535.41,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 1,
+      "electrical": 0,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 542.66,
+      "dangling_removed": 5
+    }
+  },
+  {
+    "arm": "w10_s0",
+    "board": "complex_hierarchy",
+    "before": {
+      "unrouted": 0,
+      "electrical": 2,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 2,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 9.22,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 0,
+      "electrical": 0,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 23.9,
+      "dangling_removed": 0
+    }
+  },
+  {
+    "arm": "w10_s0",
+    "board": "interf_u",
+    "before": {
+      "unrouted": 0,
+      "electrical": 7,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 7,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 279.72,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 0,
+      "electrical": 2,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 2,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 393.75,
+      "dangling_removed": 1
+    }
+  },
+  {
+    "arm": "w10_s0",
+    "board": "kit_dev_coldfire",
+    "before": {
+      "unrouted": 4,
+      "electrical": 11,
+      "track_dangling": 11,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 534.46,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 5,
+      "electrical": 1,
+      "track_dangling": 1,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 543.04,
+      "dangling_removed": 19
+    }
+  },
+  {
+    "arm": "w10_s4",
+    "board": "complex_hierarchy",
+    "before": {
+      "unrouted": 0,
+      "electrical": 0,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 10.69,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 0,
+      "electrical": 0,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 12.54,
+      "dangling_removed": 0
+    }
+  },
+  {
+    "arm": "w10_s4",
+    "board": "interf_u",
+    "before": {
+      "unrouted": 5,
+      "electrical": 10,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 10,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 528.94,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 8,
+      "electrical": 2,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 2,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 533.58,
+      "dangling_removed": 3
+    }
+  },
+  {
+    "arm": "w10_s4",
+    "board": "kit_dev_coldfire",
+    "before": {
+      "unrouted": 4,
+      "electrical": 2,
+      "track_dangling": 2,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 0,
+      "route_s": 534.4,
+      "dangling_removed": 0
+    },
+    "after": {
+      "unrouted": 0,
+      "electrical": 1,
+      "track_dangling": 0,
+      "via_dangling": 0,
+      "starved_thermal": 0,
+      "shorting_items": 0,
+      "clearance": 1,
+      "route_s": 542.61,
+      "dangling_removed": 6
+    }
+  }
+]
