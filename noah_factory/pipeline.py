@@ -7,6 +7,7 @@ KiCad board -> IR -> placement candidates -> routing (best candidate) -> DRC
 from __future__ import annotations
 
 import copy
+from concurrent.futures import ThreadPoolExecutor
 import json
 import shutil
 import time
@@ -81,34 +82,71 @@ def _route_stage(board_path: Path, route_dir: Path, stem: str, tag: str, rcfg: R
     return res, ses
 
 
+def _variant_board(board_path: Path, ses: Path, out_board: Path, drc_json: Path) -> dict:
+    """Import a session into a copy of board_path, refill pours, and score it with DRC."""
+    b = load_board(board_path)
+    imported = import_ses(b, ses) if ses.exists() else False
+    save_board(b, out_board)
+    check = run_drc(out_board, drc_json, schematic_parity=False)  # refills and saves
+    by_type = check.get("by_type", {})
+    return {"imported": imported, "ok": check.get("ok", False),
+            "unconnected": check.get("unconnected"), "unconnected_nets": check.get("unconnected_nets", []),
+            "starved_thermal": by_type.get("starved_thermal", 0),
+            "electrical": check.get("by_category", {}).get("electrical", 0)}
+
+
 def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig) -> dict:
     """Stage 1 routes with copper pours kept (plane nets connect through the pour).
-    The pours are then refilled; if anything is still unconnected, stage 2 routes the rest with
-    the stage-1 tracks kept, removing the pours (all layers) of the still-unconnected nets only,
-    so the router connects them with tracks; other nets keep their pours. Dangling stubs left on
-    those nets are removed by cleanup_dangling().
-    The session from each stage is imported into the board at board_path in place."""
+
+    Stage 1 runs as a small portfolio when the board has plane layers: one Freerouting job with
+    the usual costs and one with trace costs raised on plane layers (write_layer_rules), in
+    parallel. The penalty keeps pours whole (interf_u: starved_thermal 6 -> 0) but on a dense
+    board with planes on every layer but one it starves the router (kit_dev_coldfire: unconnected
+    20 -> 130 after stage 1), so both are scored after refilling the pours and the better one is
+    kept: fewest unconnected items, then fewest starved thermals, then fewest electrical errors.
+
+    If anything is still unconnected, stage 2 routes the rest with the stage-1 tracks kept,
+    removing the pours (all layers) of the still-unconnected nets only, with the rules of the
+    chosen stage-1 variant. Dangling stubs are removed afterwards by cleanup_dangling().
+    The result is written to board_path in place."""
     route_dir = out / "routing"
     route_dir.mkdir(exist_ok=True)
-    rules = [out / "input" / f"{stem}.kicad_pro", out / "input" / f"{stem}.kicad_dru"]
+    base_rules = [out / "input" / f"{stem}.kicad_pro", out / "input" / f"{stem}.kicad_dru"]
     layers, planes = copper_layers_with_planes(load_board(board_path))
     layer_rules = route_dir / f"{stem}.layers.rules"
+    variants = {"plain": base_rules}
     if write_layer_rules(layer_rules, stem, layers, planes, rcfg.plane_layer_cost_factor):
-        rules.append(layer_rules)
-    stages = []
+        variants["plane_penalty"] = base_rules + [layer_rules]
 
-    res, ses = _route_stage(board_path, route_dir, stem, "stage1", rcfg, rules, drop_pour_nets=None)
-    stages.append(res)
-    if ses.exists():
-        b = load_board(board_path)
-        res["imported"] = import_ses(b, ses)
-        save_board(b, board_path)
-    check = run_drc(board_path, route_dir / "drc_stage1.json", schematic_parity=False)  # refills pours
-    res["unconnected_after_refill"] = check.get("unconnected")
+    # Stage 1: one DSN, the router variants in parallel (separate processes; pcbnew stays serial).
+    copy_ = load_board(board_path)
+    prep = prepare_for_router(copy_, drop_pour_nets=None)
+    dsn = route_dir / f"{stem}.stage1.dsn"
+    export_dsn(copy_, dsn)
+    with ThreadPoolExecutor(max_workers=len(variants)) as pool:
+        jobs = {name: pool.submit(run_freerouting, dsn, route_dir / f"{stem}.stage1_{name}.ses", rcfg,
+                                  route_dir / f"freerouting.stage1_{name}.log", rules)
+                for name, rules in variants.items()}
+        runs = {name: job.result() for name, job in jobs.items()}
+    scored = {}
+    for name in variants:
+        scored[name] = _variant_board(board_path, route_dir / f"{stem}.stage1_{name}.ses",
+                                      route_dir / f"{stem}.stage1_{name}.kicad_pcb",
+                                      route_dir / f"drc_stage1_{name}.json")
+    chosen = min(scored, key=lambda n: (scored[n]["unconnected"] if scored[n]["unconnected"] is not None else 10**9,
+                                        scored[n]["starved_thermal"], scored[n]["electrical"]))
+    shutil.copy2(route_dir / f"{stem}.stage1_{chosen}.kicad_pcb", board_path)
+    res = dict(runs[chosen])
+    res.update({"stage": "stage1", "prepared": prep, "chosen_variant": chosen,
+                "unconnected_after_refill": scored[chosen]["unconnected"],
+                "variants": {n: {"time_s": runs[n]["time_s"], "timed_out": runs[n]["timed_out"],
+                                 **{k: v for k, v in scored[n].items() if k != "unconnected_nets"}}
+                             for n in variants}})
+    stages = [res]
 
-    if check.get("ok") and check["unconnected"] > 0:
-        nets = set(check.get("unconnected_nets", []))
-        res2, ses2 = _route_stage(board_path, route_dir, stem, "stage2", rcfg, rules, drop_pour_nets=nets)
+    if scored[chosen]["ok"] and scored[chosen]["unconnected"]:
+        nets = set(scored[chosen]["unconnected_nets"])
+        res2, ses2 = _route_stage(board_path, route_dir, stem, "stage2", rcfg, variants[chosen], drop_pour_nets=nets)
         res2["unconnected_nets_in"] = sorted(nets)
         stages.append(res2)
         if ses2.exists():
@@ -123,7 +161,8 @@ def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig)
         "reported_unrouted": last.get("reported_unrouted"),
         "reported_violations": last.get("reported_violations"),
         "max_passes": rcfg.max_passes,
-        "plane_layers_penalised": sorted(planes) if layer_rules in rules else [],
+        "stage1_variant": chosen,
+        "plane_layers_penalised": sorted(planes) if chosen == "plane_penalty" else [],
     }
 
 
