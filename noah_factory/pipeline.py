@@ -83,8 +83,9 @@ def _route_stage(board_path: Path, route_dir: Path, stem: str, tag: str, rcfg: R
 def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig) -> dict:
     """Stage 1 routes with copper pours kept (plane nets connect through the pour).
     The pours are then refilled; if anything is still unconnected, stage 2 routes the rest with
-    the stage-1 tracks kept, removing only the outer-layer pours of the still-unconnected nets
-    (a split outer pour) and keeping inner planes.
+    the stage-1 tracks kept, removing the pours (all layers) of the still-unconnected nets only,
+    so the router connects them with tracks; other nets keep their pours. Dangling stubs left on
+    those nets are removed by cleanup_dangling().
     The session from each stage is imported into the board at board_path in place."""
     route_dir = out / "routing"
     route_dir.mkdir(exist_ok=True)

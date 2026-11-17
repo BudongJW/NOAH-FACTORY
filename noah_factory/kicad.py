@@ -300,23 +300,20 @@ def prepare_for_router(board, clearance_mm: float = 0.3, drop_pour_nets: set[str
 
     * Free copper texts and graphics are turned into keepout rule areas: the Specctra export
       does not carry them, so the router would run tracks through them.
-    * drop_pour_nets: delete the *outer-layer* copper pours of these nets. Freerouting treats a
-      plane net as already connected; after parts move, a refilled outer pour can split and
-      strand pads, so stage 2 of the pipeline routes those nets with tracks. Pours that lie only
-      on inner layers (planes) are always kept, so plane nets can still be reached with a via;
-      removing them made the router lay fan-out stubs that later dangled.
+    * drop_pour_nets: delete the copper pours (all layers) of these nets only. Freerouting treats
+      a net that owns a pour/plane as already connected and does not route it, so pads that the
+      refilled pour or plane fails to reach (a split outer pour, or an SMD pad that never got its
+      via to an inner plane) stay unconnected. Stage 2 therefore removes the pours of exactly the
+      nets that are still unconnected, so the router connects them with tracks; pours of all other
+      nets stay. (Keeping inner planes in stage 2 was tried: +3.3V went from 17 to 15 unconnected
+      on kit_dev_coldfire, because the router again considered it connected.) Fan-out stubs the
+      router may leave on those nets are removed afterwards by the dangling-item cleanup.
     Use this on a throw-away copy only; import the session into the real board.
     """
     pcbnew = _pcbnew()
     clamped = clamp_netclasses_to_board_minimums(board)
-    pours = []
-    if drop_pour_nets:
-        for z in board.Zones():
-            if z.GetIsRuleArea() or z.GetNetname() not in drop_pour_nets:
-                continue
-            layers = z.GetLayerSet()
-            if layers.Contains(pcbnew.F_Cu) or layers.Contains(pcbnew.B_Cu):
-                pours.append(z)
+    pours = [z for z in board.Zones()
+             if drop_pour_nets and not z.GetIsRuleArea() and z.GetNetname() in drop_pour_nets]
     with quiet_native_stderr():
         for z in pours:
             board.Delete(z)
