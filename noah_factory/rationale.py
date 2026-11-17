@@ -97,6 +97,9 @@ def build_evidence(store: EvidenceStore, *, before: dict, after: dict, locked: l
         ids["route_stats"] = store.add("metric", "routing_stats", route_stats["track_length_mm"],
                                        unit="mm", tool=tools["router"],
                                        detail={"via_count": route_stats["via_count"]}).id
+    if routing and routing.get("cleanup", {}).get("removed"):
+        ids["cleanup"] = store.add("tool_report", "dangling_items_removed", routing["cleanup"]["removed"],
+                                   tool=tools["drc"], detail={"rounds": routing["cleanup"]["rounds"]}).id
     if routing:
         ids["router_report"] = store.add("tool_report", "router_final_score", routing.get("reported_unrouted"),
                                          tool=tools["router"],
@@ -162,6 +165,9 @@ def build_claims(store: EvidenceStore, ids: dict, *, before: dict, after: dict, 
             f"(기준 {_fmt(e['limit_mm'])} mm 이내) — {verdict}", [eid])
     if drc and drc.get("ok"):
         add("routing", f"배선 후 미배선 연결은 {drc['unconnected']}개입니다.", [ids["unrouted"]])
+        if "cleanup" in ids:
+            add("routing", f"배선기가 남긴 끝이 연결되지 않은 트랙·비아 조각 {store.get(ids['cleanup']).value}개를 "
+                f"DRC로 찾아 제거했습니다. 연결 상태에는 영향이 없습니다.", [ids["cleanup"]])
         c = store.get(ids["drc"]).detail
         add("routing", f"DRC 결과: 전기 규칙 {c['electrical']}건, 제조 규칙 {c['manufacturing']}건, "
             f"배치(코트야드) {c['placement']}건, 실크·문자 {c['cosmetic']}건, "

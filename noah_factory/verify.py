@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from collections import Counter
 from pathlib import Path
@@ -14,6 +15,8 @@ MANUFACTURING = {"solder_mask_bridge", "hole_to_hole", "drill_out_of_range", "an
                  "via_diameter", "track_width", "copper_sliver", "micro_via_drill_out_of_range",
                  "connection_width", "npth_inside_courtyard", "pth_inside_courtyard"}
 PLACEMENT = {"courtyards_overlap", "missing_courtyard", "malformed_courtyard"}
+DANGLING = {"track_dangling", "via_dangling"}
+_NET_IN_ITEM = re.compile(r"\[([^\]]+)\]")  # e.g. "PTH pad 2 [GND] of C5"
 
 
 def categorize(violation_type: str) -> str:
@@ -65,10 +68,17 @@ def run_drc(board: Path, out_json: Path, schematic_parity: bool = False,
             items = [it.get("description", "") for it in v.get("items", [])][:2]
             examples.append({"type": v.get("type"), "severity": v.get("severity"),
                              "description": v.get("description"), "items": items})
+    unconnected_nets = sorted({m.group(1) for u in data.get("unconnected_items", [])
+                               for it in u.get("items", [])
+                               if (m := _NET_IN_ITEM.search(it.get("description", "")))})
+    dangling = [it["uuid"] for v in violations if v.get("type") in DANGLING
+                for it in v.get("items", [])[:1] if it.get("uuid")]
     return {
         "ok": True,
         "parity_checked": schematic_parity,
         "unconnected": len(data.get("unconnected_items", [])),
+        "unconnected_nets": unconnected_nets,
+        "dangling_uuids": dangling,
         "violations_total": len(violations),
         "by_category": dict(by_cat),
         "errors_by_category": dict(errors_by_cat),

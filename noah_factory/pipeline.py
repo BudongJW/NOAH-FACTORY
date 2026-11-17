@@ -17,7 +17,8 @@ from . import __version__
 from .evidence import EvidenceStore
 from .export import export_fabrication
 from .kicad import (apply_placement, board_to_ir, export_dsn, import_ses, kicad_version, load_board,
-                    lock_refs, min_track_width_um, prepare_for_router, remove_layout_bound_zones,
+                    delete_tracks_by_uuid, lock_refs, min_track_width_um, prepare_for_router,
+                    remove_layout_bound_zones,
                     routing_stats, save_board, strip_routing)
 import numpy as np
 
@@ -66,9 +67,9 @@ def copy_project(board: Path, dest: Path) -> Path:
 
 
 def _route_stage(board_path: Path, route_dir: Path, stem: str, tag: str, rcfg: RoutingConfig,
-                 rules: list[Path], drop_pours: bool) -> tuple[dict, Path]:
+                 rules: list[Path], drop_pour_nets: set[str] | None) -> tuple[dict, Path]:
     copy_ = load_board(board_path)
-    prep = prepare_for_router(copy_, drop_pours=drop_pours)
+    prep = prepare_for_router(copy_, drop_pour_nets=drop_pour_nets)
     dsn, ses = route_dir / f"{stem}.{tag}.dsn", route_dir / f"{stem}.{tag}.ses"
     export_dsn(copy_, dsn)
     res = run_freerouting(dsn, ses, rcfg, route_dir / f"freerouting.{tag}.log", extra_inputs=rules)
@@ -79,15 +80,16 @@ def _route_stage(board_path: Path, route_dir: Path, stem: str, tag: str, rcfg: R
 
 def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig) -> dict:
     """Stage 1 routes with copper pours kept (plane nets connect through the pour).
-    The pours are then refilled; if anything is still unconnected (a pour split after the parts
-    moved), stage 2 routes the rest with pours removed and the stage-1 tracks kept.
+    The pours are then refilled; if anything is still unconnected, stage 2 routes the rest with
+    the stage-1 tracks kept, removing only the outer-layer pours of the still-unconnected nets
+    (a split outer pour) and keeping inner planes.
     The session from each stage is imported into the board at board_path in place."""
     route_dir = out / "routing"
     route_dir.mkdir(exist_ok=True)
     rules = [out / "input" / f"{stem}.kicad_pro", out / "input" / f"{stem}.kicad_dru"]
     stages = []
 
-    res, ses = _route_stage(board_path, route_dir, stem, "stage1", rcfg, rules, drop_pours=False)
+    res, ses = _route_stage(board_path, route_dir, stem, "stage1", rcfg, rules, drop_pour_nets=None)
     stages.append(res)
     if ses.exists():
         b = load_board(board_path)
@@ -97,7 +99,9 @@ def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig)
     res["unconnected_after_refill"] = check.get("unconnected")
 
     if check.get("ok") and check["unconnected"] > 0:
-        res2, ses2 = _route_stage(board_path, route_dir, stem, "stage2", rcfg, rules, drop_pours=True)
+        nets = set(check.get("unconnected_nets", []))
+        res2, ses2 = _route_stage(board_path, route_dir, stem, "stage2", rcfg, rules, drop_pour_nets=nets)
+        res2["unconnected_nets_in"] = sorted(nets)
         stages.append(res2)
         if ses2.exists():
             b = load_board(board_path)
@@ -112,6 +116,27 @@ def route_two_stage(board_path: Path, out: Path, stem: str, rcfg: RoutingConfig)
         "reported_violations": last.get("reported_violations"),
         "max_passes": rcfg.max_passes,
     }
+
+
+def cleanup_dangling(board_path: Path, work_dir: Path, rounds: int = 3) -> dict:
+    """Delete track and via stubs that KiCad's DRC reports as dangling (one end connected or
+    none). Removing a stub never breaks a connection; deleting one can expose the next segment
+    of the same stub, hence a few rounds. Zones are refilled by each DRC run."""
+    removed = 0
+    done_rounds = 0
+    for i in range(rounds):
+        done_rounds = i + 1
+        check = run_drc(board_path, work_dir / f"drc_cleanup_{i + 1}.json", schematic_parity=False)
+        uuids = set(check.get("dangling_uuids", [])) if check.get("ok") else set()
+        if not uuids:
+            break
+        b = load_board(board_path)
+        n = delete_tracks_by_uuid(b, uuids)
+        save_board(b, board_path)
+        removed += n
+        if n == 0:
+            break
+    return {"removed": removed, "rounds": done_rounds}
 
 
 def run(cfg: RunConfig, log=print) -> dict:
@@ -210,9 +235,11 @@ def run(cfg: RunConfig, log=print) -> dict:
     if cfg.route:
         t = time.monotonic()
         routing = route_two_stage(final_board_path, out, stem, rcfg)
+        routing["cleanup"] = cleanup_dangling(final_board_path, out / "routing")
         timings["routing_s"] = round(time.monotonic() - t, 2)
         log(f"[routing] stages={len(routing['stages'])} ok={routing['ok']} "
-            f"unrouted(reported)={routing['reported_unrouted']} ({timings['routing_s']}s)")
+            f"unrouted(reported)={routing['reported_unrouted']} "
+            f"dangling removed={routing['cleanup']['removed']} ({timings['routing_s']}s)")
 
     # 4. Verification -------------------------------------------------------
     t = time.monotonic()
@@ -273,7 +300,7 @@ def run(cfg: RunConfig, log=print) -> dict:
                      "legalization_failures": best.legalization_failures},
             "w_congestion": cfg.w_congestion, "zones_removed": zones_removed,
             "candidates": candidates},
-        "routing": routing, "route_stats": rstats, "drc": {k: v for k, v in drc.items() if k != "examples"},
+        "routing": routing, "route_stats": rstats, "drc": {k: v for k, v in drc.items() if k not in ("examples", "dangling_uuids")},
         "claims": {"verified": sum(c.status == "verified" for c in claims),
                    "rejected": sum(c.status != "verified" for c in claims)},
         "fabrication": fab,

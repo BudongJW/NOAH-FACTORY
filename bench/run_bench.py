@@ -56,7 +56,7 @@ def baseline(board_path: Path, work: Path) -> dict:
         "decap_pass": sum(d["pass"] for d in m["decaps"]),
         "decap_total": len(m["decaps"]),
         "route_stats": routing_stats(load_board(src)),
-        "drc": {k: v for k, v in drc.items() if k != "examples"},
+        "drc": {k: v for k, v in drc.items() if k not in ("examples", "dangling_uuids")},
         "lock": sorted(c.ref for c in ir.components if c.locked or c.kind in LOCK_KINDS),
         "parts": len(ir.components),
         "density_pct": density,

@@ -267,6 +267,15 @@ def strip_routing(board) -> int:
     return len(items)
 
 
+def delete_tracks_by_uuid(board, uuids: set[str]) -> int:
+    """Delete tracks/vias whose KiCad UUID is in `uuids` (e.g. the ones DRC reports dangling)."""
+    doomed = [t for t in board.GetTracks() if t.m_Uuid.AsString() in uuids]
+    with quiet_native_stderr():
+        for t in doomed:
+            board.Delete(t)
+    return len(doomed)
+
+
 def lock_refs(board, refs: set[str]) -> None:
     for fp in board.GetFootprints():
         if fp.GetReference() in refs:
@@ -286,20 +295,28 @@ def routing_stats(board) -> dict:
     return {"track_length_mm": round(tracks, 1), "via_count": vias, "segment_count": segments}
 
 
-def prepare_for_router(board, clearance_mm: float = 0.3, drop_pours: bool = False) -> dict:
+def prepare_for_router(board, clearance_mm: float = 0.3, drop_pour_nets: set[str] | None = None) -> dict:
     """Make a board copy safe for Freerouting before DSN export.
 
     * Free copper texts and graphics are turned into keepout rule areas: the Specctra export
       does not carry them, so the router would run tracks through them.
-    * drop_pours: delete copper pours (non-rule-area zones). Freerouting treats a plane net as
-      already connected; after parts move, the refilled pour can split and strand pads. The
-      pipeline therefore routes with pours first, then (only if something is left unconnected)
-      routes again without pours so the remaining connections get tracks.
+    * drop_pour_nets: delete the *outer-layer* copper pours of these nets. Freerouting treats a
+      plane net as already connected; after parts move, a refilled outer pour can split and
+      strand pads, so stage 2 of the pipeline routes those nets with tracks. Pours that lie only
+      on inner layers (planes) are always kept, so plane nets can still be reached with a via;
+      removing them made the router lay fan-out stubs that later dangled.
     Use this on a throw-away copy only; import the session into the real board.
     """
     pcbnew = _pcbnew()
     clamped = clamp_netclasses_to_board_minimums(board)
-    pours = [z for z in board.Zones() if not z.GetIsRuleArea()] if drop_pours else []
+    pours = []
+    if drop_pour_nets:
+        for z in board.Zones():
+            if z.GetIsRuleArea() or z.GetNetname() not in drop_pour_nets:
+                continue
+            layers = z.GetLayerSet()
+            if layers.Contains(pcbnew.F_Cu) or layers.Contains(pcbnew.B_Cu):
+                pours.append(z)
     with quiet_native_stderr():
         for z in pours:
             board.Delete(z)

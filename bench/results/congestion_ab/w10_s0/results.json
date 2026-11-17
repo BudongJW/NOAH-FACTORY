@@ -1,0 +1,785 @@
+[
+  {
+    "board": "interf_u",
+    "baseline": {
+      "hpwl_mm": 4369.0,
+      "decap_pass": 0,
+      "decap_total": 4,
+      "route_stats": {
+        "track_length_mm": 5101.5,
+        "via_count": 84,
+        "segment_count": 731
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 49,
+        "by_category": {
+          "electrical": 2,
+          "environment": 25,
+          "parity": 22
+        },
+        "errors_by_category": {
+          "electrical": 2
+        },
+        "by_type": {
+          "lib_footprint_issues": 25,
+          "footprint_symbol_mismatch": 22,
+          "starved_thermal": 2
+        }
+      },
+      "lock": [
+        "BUS1",
+        "P1"
+      ],
+      "parts": 25,
+      "density_pct": {
+        "front": 49.1,
+        "back": 43.0,
+        "board_area_mm2": 12208.8
+      }
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/interf_u/interf_u.kicad_pcb",
+      "parts": 25,
+      "nets": 173,
+      "layers": 2,
+      "locked": [
+        "BUS1",
+        "P1"
+      ],
+      "timings": {
+        "intake_s": 0.11,
+        "placement_s": 15.68,
+        "routing_s": 279.72,
+        "verification_s": 1.25,
+        "report_s": 0.18,
+        "export_s": 1.27,
+        "total_s": 298.78
+      },
+      "density_pct": {
+        "front": 49.1,
+        "back": 43.0,
+        "board_area_mm2": 12208.8
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 4369.0,
+          "congestion": {
+            "ace5": 1.063,
+            "max_util": 1.689,
+            "hot_bins_pct": 2.2,
+            "overflow_mm": 133.9,
+            "penalty": 60.0,
+            "bin_mm": 3.62,
+            "capacity_mm_per_bin": 19.99
+          },
+          "decap_pass": 0,
+          "decap_total": 4
+        },
+        "best": {
+          "hpwl_mm": 3910.9,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 3,
+          "decap_total": 4,
+          "congestion": {
+            "ace5": 0.883,
+            "max_util": 1.13,
+            "hot_bins_pct": 0.9,
+            "overflow_mm": 12.3,
+            "penalty": 1.1,
+            "bin_mm": 3.62,
+            "capacity_mm_per_bin": 19.99
+          },
+          "legalization_failures": []
+        },
+        "w_congestion": 10.0,
+        "zones_removed": {
+          "teardrops": 0,
+          "local_pours": 0,
+          "local_pour_nets": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 4,
+            "cost": 3673.2,
+            "hpwl_mm": 3910.9,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 30976,
+              "accepted": 14928,
+              "anneal_time_s": 15.09,
+              "time_s": 15.15,
+              "T0": 16016.867488442029
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 2,
+            "cost": 4677.8,
+            "hpwl_mm": 4712.3,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 28672,
+              "accepted": 15401,
+              "anneal_time_s": 15.14,
+              "time_s": 15.2,
+              "T0": 24566.484089795515
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 3,
+            "cost": 5711.6,
+            "hpwl_mm": 5661.1,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 29184,
+              "accepted": 15587,
+              "anneal_time_s": 15.14,
+              "time_s": 15.19,
+              "T0": 25116.8026237149
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": false,
+        "stages": [
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 266.0,
+            "reported_unrouted": 9,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 6,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 6
+          },
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 12.3,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 1,
+              "copper_graphics_keepouts": 6,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 278.3,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 5225.3,
+        "via_count": 90,
+        "segment_count": 1415
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 73,
+        "by_category": {
+          "cosmetic": 19,
+          "electrical": 7,
+          "environment": 25,
+          "parity": 22
+        },
+        "errors_by_category": {
+          "cosmetic": 19,
+          "electrical": 7
+        },
+        "by_type": {
+          "lib_footprint_issues": 25,
+          "footprint_symbol_mismatch": 22,
+          "silk_over_copper": 13,
+          "starved_thermal": 7,
+          "silk_overlap": 6
+        }
+      },
+      "claims": {
+        "verified": 14,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "interf_u-B_Adhesive.gba",
+          "interf_u-B_Courtyard.gbr",
+          "interf_u-B_Fab.gbr",
+          "interf_u-B_Mask.gbs",
+          "interf_u-B_Paste.gbp",
+          "interf_u-B_Silkscreen.gbo",
+          "interf_u-Edge_Cuts.gm1",
+          "interf_u-F_Adhesive.gta",
+          "interf_u-F_Courtyard.gbr",
+          "interf_u-F_Fab.gbr",
+          "interf_u-F_Mask.gts",
+          "interf_u-F_Paste.gtp",
+          "interf_u-F_Silkscreen.gto",
+          "interf_u-Margin.gbr",
+          "interf_u-User_Comments.gbr",
+          "interf_u-User_Drawings.gbr",
+          "interf_u-User_Eco1.gbr",
+          "interf_u-User_Eco2.gbr",
+          "interf_u-bottom_copper.gbl",
+          "interf_u-job.gbrjob",
+          "interf_u-top_copper.gtl",
+          "interf_u.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "control": null,
+    "error": null,
+    "place_time_per_seed_s": 15.0,
+    "wall_s": 300.3
+  },
+  {
+    "board": "complex_hierarchy",
+    "baseline": {
+      "hpwl_mm": 1237.3,
+      "decap_pass": 2,
+      "decap_total": 2,
+      "route_stats": {
+        "track_length_mm": 1264.7,
+        "via_count": 0,
+        "segment_count": 365
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 73,
+        "by_category": {
+          "cosmetic": 5,
+          "environment": 68
+        },
+        "errors_by_category": {
+          "cosmetic": 1
+        },
+        "by_type": {
+          "lib_footprint_issues": 68,
+          "silk_edge_clearance": 4,
+          "silk_overlap": 1
+        }
+      },
+      "lock": [
+        "P101",
+        "P102",
+        "P201",
+        "P202",
+        "P301",
+        "P302"
+      ],
+      "parts": 68,
+      "density_pct": {
+        "front": 37.8,
+        "back": 37.8,
+        "board_area_mm2": 8080.0
+      }
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/complex_hierarchy/complex_hierarchy.kicad_pcb",
+      "parts": 68,
+      "nets": 53,
+      "layers": 2,
+      "locked": [
+        "P101",
+        "P102",
+        "P201",
+        "P202",
+        "P301",
+        "P302"
+      ],
+      "timings": {
+        "intake_s": 0.13,
+        "placement_s": 32.9,
+        "routing_s": 9.22,
+        "verification_s": 1.47,
+        "report_s": 0.18,
+        "export_s": 1.0,
+        "total_s": 45.43
+      },
+      "density_pct": {
+        "front": 37.8,
+        "back": 37.8,
+        "board_area_mm2": 8080.0
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 1237.3,
+          "congestion": {
+            "ace5": 0.409,
+            "max_util": 0.621,
+            "hot_bins_pct": 0.0,
+            "overflow_mm": 0.0,
+            "penalty": 0.0,
+            "bin_mm": 3.15,
+            "capacity_mm_per_bin": 14.2
+          },
+          "decap_pass": 2,
+          "decap_total": 2
+        },
+        "best": {
+          "hpwl_mm": 1207.3,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 2,
+          "decap_total": 2,
+          "congestion": {
+            "ace5": 0.5,
+            "max_util": 0.638,
+            "hot_bins_pct": 0.0,
+            "overflow_mm": 0.0,
+            "penalty": 0.0,
+            "bin_mm": 3.15,
+            "capacity_mm_per_bin": 14.2
+          },
+          "legalization_failures": []
+        },
+        "w_congestion": 10.0,
+        "zones_removed": {
+          "teardrops": 167,
+          "local_pours": 0,
+          "local_pour_nets": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 4,
+            "cost": 1074.2,
+            "hpwl_mm": 1207.3,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 104704,
+              "accepted": 42844,
+              "anneal_time_s": 32.26,
+              "time_s": 32.38,
+              "T0": 4425.065832502923
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 1,
+            "cost": 1147.8,
+            "hpwl_mm": 1276.5,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 101120,
+              "accepted": 40706,
+              "anneal_time_s": 32.26,
+              "time_s": 32.38,
+              "T0": 4552.632935033858
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 2,
+            "cost": 1239.1,
+            "hpwl_mm": 1376.0,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 107008,
+              "accepted": 44559,
+              "anneal_time_s": 32.3,
+              "time_s": 32.41,
+              "T0": 5030.4243705258805
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": true,
+        "stages": [
+          {
+            "ok": true,
+            "returncode": 0,
+            "timed_out": false,
+            "killed": false,
+            "time_s": 7.76,
+            "reported_unrouted": 0,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 2,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 0
+          }
+        ],
+        "time_s": 7.76,
+        "reported_unrouted": 0,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 1186.3,
+        "via_count": 2,
+        "segment_count": 272
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 122,
+        "by_category": {
+          "cosmetic": 52,
+          "electrical": 2,
+          "environment": 68
+        },
+        "errors_by_category": {
+          "cosmetic": 48,
+          "electrical": 2
+        },
+        "by_type": {
+          "lib_footprint_issues": 68,
+          "silk_overlap": 29,
+          "silk_over_copper": 19,
+          "silk_edge_clearance": 4,
+          "starved_thermal": 2
+        }
+      },
+      "claims": {
+        "verified": 13,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "complex_hierarchy-B_Adhesive.gba",
+          "complex_hierarchy-B_Courtyard.gbr",
+          "complex_hierarchy-B_Fab.gbr",
+          "complex_hierarchy-B_Mask.gbs",
+          "complex_hierarchy-B_Paste.gbp",
+          "complex_hierarchy-B_Silkscreen.gbo",
+          "complex_hierarchy-Edge_Cuts.gm1",
+          "complex_hierarchy-F_Adhesive.gta",
+          "complex_hierarchy-F_Courtyard.gbr",
+          "complex_hierarchy-F_Fab.gbr",
+          "complex_hierarchy-F_Mask.gts",
+          "complex_hierarchy-F_Paste.gtp",
+          "complex_hierarchy-F_Silkscreen.gto",
+          "complex_hierarchy-Margin.gbr",
+          "complex_hierarchy-User_Comments.gbr",
+          "complex_hierarchy-User_Drawings.gbr",
+          "complex_hierarchy-User_Eco1.gbr",
+          "complex_hierarchy-User_Eco2.gbr",
+          "complex_hierarchy-bottom_copper.gbl",
+          "complex_hierarchy-job.gbrjob",
+          "complex_hierarchy-top_copper.gtl",
+          "complex_hierarchy.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "control": null,
+    "error": null,
+    "place_time_per_seed_s": 32.2,
+    "wall_s": 47.1
+  },
+  {
+    "board": "kit_dev_coldfire",
+    "baseline": {
+      "hpwl_mm": 7896.5,
+      "decap_pass": 2,
+      "decap_total": 4,
+      "route_stats": {
+        "track_length_mm": 9412.3,
+        "via_count": 253,
+        "segment_count": 2934
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 0,
+        "violations_total": 160,
+        "by_category": {
+          "environment": 160
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 160
+        }
+      },
+      "lock": [
+        "J201",
+        "P301",
+        "P302",
+        "P303"
+      ],
+      "parts": 160,
+      "density_pct": {
+        "front": 52.8,
+        "back": 38.0,
+        "board_area_mm2": 14411.2
+      }
+    },
+    "noah": {
+      "input": "/usr/share/kicad/demos/kit-dev-coldfire-xilinx_5213/kit-dev-coldfire-xilinx_5213.kicad_pcb",
+      "parts": 160,
+      "nets": 278,
+      "layers": 4,
+      "locked": [
+        "J201",
+        "P301",
+        "P302",
+        "P303"
+      ],
+      "timings": {
+        "intake_s": 0.26,
+        "placement_s": 70.07,
+        "routing_s": 534.46,
+        "verification_s": 2.73,
+        "report_s": 0.18,
+        "export_s": 1.77,
+        "total_s": 611.33
+      },
+      "density_pct": {
+        "front": 52.8,
+        "back": 38.0,
+        "board_area_mm2": 14411.2
+      },
+      "placement": {
+        "input": {
+          "hpwl_mm": 7896.5,
+          "congestion": {
+            "ace5": 0.766,
+            "max_util": 1.025,
+            "hot_bins_pct": 0.3,
+            "overflow_mm": 3.2,
+            "penalty": 0.1,
+            "bin_mm": 4.93,
+            "capacity_mm_per_bin": 69.53
+          },
+          "decap_pass": 2,
+          "decap_total": 4
+        },
+        "best": {
+          "hpwl_mm": 7711.8,
+          "overlaps": 0,
+          "outside": 0,
+          "decap_pass": 1,
+          "decap_total": 4,
+          "congestion": {
+            "ace5": 0.797,
+            "max_util": 1.06,
+            "hot_bins_pct": 0.3,
+            "overflow_mm": 7.3,
+            "penalty": 0.4,
+            "bin_mm": 4.93,
+            "capacity_mm_per_bin": 69.53
+          },
+          "legalization_failures": []
+        },
+        "w_congestion": 10.0,
+        "zones_removed": {
+          "teardrops": 0,
+          "local_pours": 0,
+          "local_pour_nets": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "seed": 4,
+            "cost": 7212.7,
+            "hpwl_mm": 7711.8,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 188160,
+              "accepted": 97318,
+              "anneal_time_s": 69.13,
+              "time_s": 69.58,
+              "T0": 5016.032513511926
+            },
+            "file": "candidates/candidate_1.kicad_pcb"
+          },
+          {
+            "rank": 2,
+            "seed": 3,
+            "cost": 7562.0,
+            "hpwl_mm": 7966.5,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 188416,
+              "accepted": 104156,
+              "anneal_time_s": 69.08,
+              "time_s": 69.55,
+              "T0": 8417.501085844098
+            },
+            "file": "candidates/candidate_2.kicad_pcb"
+          },
+          {
+            "rank": 3,
+            "seed": 2,
+            "cost": 8351.0,
+            "hpwl_mm": 8776.0,
+            "overlaps": 0,
+            "outside": 0,
+            "legalization_failures": [],
+            "stats": {
+              "moves": 180992,
+              "accepted": 101925,
+              "anneal_time_s": 69.12,
+              "time_s": 69.51,
+              "T0": 8443.170509664786
+            },
+            "file": "candidates/candidate_3.kicad_pcb"
+          }
+        ]
+      },
+      "routing": {
+        "ok": false,
+        "stages": [
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 265.46,
+            "reported_unrouted": 35,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage1",
+            "prepared": {
+              "pours_removed": 0,
+              "copper_graphics_keepouts": 5,
+              "netclasses_clamped": []
+            },
+            "imported": true,
+            "unconnected_after_refill": 32
+          },
+          {
+            "ok": false,
+            "returncode": 0,
+            "timed_out": true,
+            "killed": false,
+            "time_s": 265.44,
+            "reported_unrouted": 5,
+            "reported_violations": 0,
+            "max_passes": 40,
+            "stage": "stage2",
+            "prepared": {
+              "pours_removed": 3,
+              "copper_graphics_keepouts": 5,
+              "netclasses_clamped": []
+            },
+            "imported": true
+          }
+        ],
+        "time_s": 530.9,
+        "reported_unrouted": 5,
+        "reported_violations": 0,
+        "max_passes": 40
+      },
+      "route_stats": {
+        "track_length_mm": 9572.4,
+        "via_count": 431,
+        "segment_count": 3060
+      },
+      "drc": {
+        "ok": true,
+        "parity_checked": true,
+        "unconnected": 4,
+        "violations_total": 312,
+        "by_category": {
+          "cosmetic": 141,
+          "environment": 160,
+          "electrical": 11
+        },
+        "errors_by_category": {},
+        "by_type": {
+          "lib_footprint_issues": 160,
+          "silk_overlap": 78,
+          "silk_over_copper": 63,
+          "track_dangling": 11
+        }
+      },
+      "claims": {
+        "verified": 14,
+        "rejected": 0
+      },
+      "fabrication": {
+        "ok": true,
+        "errors": {},
+        "files": [
+          "kit-dev-coldfire-xilinx_5213-B_Adhesive.gba",
+          "kit-dev-coldfire-xilinx_5213-B_Courtyard.gbr",
+          "kit-dev-coldfire-xilinx_5213-B_Cu.gbl",
+          "kit-dev-coldfire-xilinx_5213-B_Fab.gbr",
+          "kit-dev-coldfire-xilinx_5213-B_Mask.gbs",
+          "kit-dev-coldfire-xilinx_5213-B_Paste.gbp",
+          "kit-dev-coldfire-xilinx_5213-B_Silkscreen.gbo",
+          "kit-dev-coldfire-xilinx_5213-Edge_Cuts.gm1",
+          "kit-dev-coldfire-xilinx_5213-F_Adhesive.gta",
+          "kit-dev-coldfire-xilinx_5213-F_Courtyard.gbr",
+          "kit-dev-coldfire-xilinx_5213-F_Fab.gbr",
+          "kit-dev-coldfire-xilinx_5213-F_Mask.gts",
+          "kit-dev-coldfire-xilinx_5213-F_Paste.gtp",
+          "kit-dev-coldfire-xilinx_5213-F_Silkscreen.gto",
+          "kit-dev-coldfire-xilinx_5213-In1_Cu.g1",
+          "kit-dev-coldfire-xilinx_5213-In2_Cu.g2",
+          "kit-dev-coldfire-xilinx_5213-Margin.gbr",
+          "kit-dev-coldfire-xilinx_5213-Top_layer.gtl",
+          "kit-dev-coldfire-xilinx_5213-User_Comments.gbr",
+          "kit-dev-coldfire-xilinx_5213-User_Drawings.gbr",
+          "kit-dev-coldfire-xilinx_5213-job.gbrjob",
+          "kit-dev-coldfire-xilinx_5213.drl"
+        ],
+        "archive": "fabrication.zip"
+      }
+    },
+    "control": null,
+    "error": null,
+    "place_time_per_seed_s": 69.0,
+    "wall_s": 613.8
+  }
+]
