@@ -47,7 +47,9 @@ class RunConfig:
     place_time_s: float = 30.0
     init: str = "random"
     place: bool = True
-    w_congestion: float = 0.0
+    # Congestion-aware placement is on by default: in the A/B (bench/results/congestion_ab.md)
+    # weight 10 halved unrouted connections on placement-limited boards, at +0-15% HPWL.
+    w_congestion: float = 10.0
     seed_offset: int = 0  # seeds are seed_offset+1 .. seed_offset+seeds (for repeated runs)
     route: bool = True
     route_passes: int = 30

@@ -82,7 +82,7 @@ def main() -> int:
     ap.add_argument("--summary-only", action="store_true", help="rewrite summary.md from results.json")
     ap.add_argument("--replace-from", type=Path, help="with --summary-only: take matching boards from DIR")
     ap.add_argument("--replace-note", default="", help="note shown for replaced rows")
-    ap.add_argument("--congestion", type=float, default=0.0, help="placement congestion weight")
+    ap.add_argument("--congestion", type=float, default=10.0, help="placement congestion weight (0 = off)")
     ap.add_argument("--seed-offset", type=int, default=0, help="use seeds offset+1..offset+N")
     ap.add_argument("--work", type=Path, default=None, help="work directory (default runs/bench)")
     ap.add_argument("--control", action="store_true",
