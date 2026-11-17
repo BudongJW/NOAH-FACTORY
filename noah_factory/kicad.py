@@ -54,27 +54,31 @@ def _mm(v: int) -> float:
 
 
 def _courtyard_bbox_abs(pcbnew, fp):
-    """Absolute courtyard bounding box (nm) or a pad-based fallback."""
+    """Absolute keep-out box (nm) of a footprint: its courtyard united with its pads.
+
+    Some library footprints have pads that stick out of their courtyard (19 parts across the
+    KiCad demos, e.g. the power jack J201 on kit_dev_coldfire). Using the courtyard alone let
+    a neighbour sit on such a pad and short it, so the pads always count."""
     layer = pcbnew.B_CrtYd if fp.IsFlipped() else pcbnew.F_CrtYd
     with quiet_native_stderr():
         fp.BuildCourtyardCaches()
         cy = fp.GetCourtyard(layer)
+    boxes = []
     if cy.OutlineCount() > 0:
         bb = cy.BBox()
-        return bb.GetLeft(), bb.GetTop(), bb.GetRight(), bb.GetBottom()
+        boxes.append((bb.GetLeft(), bb.GetTop(), bb.GetRight(), bb.GetBottom()))
     pads = list(fp.Pads())
     if pads:
-        lefts, tops, rights, bottoms = [], [], [], []
+        margin = 0 if boxes else 250_000  # no courtyard: pads plus 0.25 mm
         for p in pads:
             bb = p.GetBoundingBox()
-            lefts.append(bb.GetLeft())
-            tops.append(bb.GetTop())
-            rights.append(bb.GetRight())
-            bottoms.append(bb.GetBottom())
-        margin = 250_000  # 0.25 mm
-        return min(lefts) - margin, min(tops) - margin, max(rights) + margin, max(bottoms) + margin
-    p = fp.GetPosition()
-    return p.x - 500_000, p.y - 500_000, p.x + 500_000, p.y + 500_000
+            boxes.append((bb.GetLeft() - margin, bb.GetTop() - margin,
+                          bb.GetRight() + margin, bb.GetBottom() + margin))
+    if not boxes:
+        p = fp.GetPosition()
+        return p.x - 500_000, p.y - 500_000, p.x + 500_000, p.y + 500_000
+    return (min(b[0] for b in boxes), min(b[1] for b in boxes),
+            max(b[2] for b in boxes), max(b[3] for b in boxes))
 
 
 def _local_bbox(abs_bbox, pos, rot_deg):
